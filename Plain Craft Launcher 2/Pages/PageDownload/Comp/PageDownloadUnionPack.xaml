@@ -4,42 +4,47 @@
     xmlns:local="clr-namespace:PCL" xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d" x:Class="PCL.PageDownloadUnionPack"
-    PanScroll="{Binding ElementName=Content, Path=ListScroll}"
+    PanScroll="{Binding ElementName=PanBack}"
     xmlns:loc="https://ce.pclc.cc/core/localization">
-    <local:PageComp x:Name="Content" PageType="ModPack">
-        <local:MyComboBoxItem Tag="" Content="{loc:Loc Common.Option.All}" IsSelected="True" />
-        <local:MyComboBoxItem Tag="4484/" Content="{loc:Loc Download.Comp.Category.Multiplayer}" />
-        <local:MyComboBoxItem Tag="/optimization"
-                              Content="{loc:Loc Download.Comp.Category.Optimization}" />
-        <local:MyComboBoxItem Tag="4479/challenging"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.Hardcore}" />
-        <local:MyComboBoxItem Tag="4483/combat" Content="{loc:Loc Download.Comp.Category.Combat}" />
-        <local:MyComboBoxItem Tag="4478/quests"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.Quests}" />
-        <local:MyComboBoxItem Tag="4472/technology"
-                              Content="{loc:Loc Download.Comp.Category.Technology}" />
-        <local:MyComboBoxItem Tag="4473/magic" Content="{loc:Loc Download.Comp.Category.Magic}" />
-        <local:MyComboBoxItem Tag="4475/adventure"
-                              Content="{loc:Loc Download.Comp.Category.Adventure}" />
-        <local:MyComboBoxItem Tag="/kitchen-sink"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.KitchenSink}" />
-        <local:MyComboBoxItem Tag="4476/"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.Exploration}" />
-        <local:MyComboBoxItem Tag="4477/"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.MiniGame}" />
-        <local:MyComboBoxItem Tag="4471/" Content="{loc:Loc Download.Comp.Category.Modpack.SciFi}" />
-        <local:MyComboBoxItem Tag="4736/"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.Skyblock}" />
-        <local:MyComboBoxItem Tag="5128/"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.VanillaPlus}" />
-        <local:MyComboBoxItem Tag="4487/" Content="{loc:Loc Download.Comp.Category.Modpack.Ftb}"
-                              ToolTip="{loc:Loc Download.Comp.Category.Modpack.Ftb.ToolTip}"
-                              ToolTipService.HorizontalOffset="70" />
-        <local:MyComboBoxItem Tag="4480/"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.MapBased}" />
-        <local:MyComboBoxItem Tag="4481/lightweight"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.SmallLight}" />
-        <local:MyComboBoxItem Tag="4482/"
-                              Content="{loc:Loc Download.Comp.Category.Modpack.ExtraLarge}" />
-    </local:PageComp>
+    <Grid>
+        <local:MyScrollViewer x:Name="PanBack" VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Margin="5">
+                <local:MyHint x:Name="HintEmpty" Margin="20,20,20,0" Theme="Blue"
+                              Text="{loc:Loc Download.Union.Empty}" Visibility="Collapsed" />
+                <ItemsControl x:Name="PanServers" Margin="20,20,20,5" ItemsSource="{Binding Servers}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Vertical" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type local:UnionServerItemViewModel}">
+                            <local:MyCard Title="{Binding DisplayName}" Margin="0,0,0,15">
+                                <StackPanel Margin="20,40,18,18">
+                                    <TextBlock Text="{Binding PackLine}" FontSize="13" TextWrapping="Wrap"
+                                               TextTrimming="None" />
+                                    <TextBlock Text="{Binding Description}" Margin="0,4,0,0" FontSize="12"
+                                               Foreground="{DynamicResource ColorBrush2}" TextWrapping="Wrap"
+                                               TextTrimming="None" />
+                                    <TextBlock Text="{Binding OrganizationLine}" Margin="0,4,0,0" FontSize="11"
+                                               Foreground="{DynamicResource ColorBrush3}" TextTrimming="None" />
+                                    <TextBlock Text="{Binding AddressLine}" Margin="0,2,0,0" FontSize="11"
+                                               Foreground="{DynamicResource ColorBrush3}" TextTrimming="None" />
+                                    <local:MyButton Text="{loc:Loc Download.Union.Download}" IsEnabled="False"
+                                                    Margin="0,10,0,0" HorizontalAlignment="Left"
+                                                    ToolTip="{loc:Loc Download.Union.DownloadLater}" />
+                                </StackPanel>
+                            </local:MyCard>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </local:MyScrollViewer>
+        <local:MyCard x:Name="PanLoad" HorizontalAlignment="Center" VerticalAlignment="Center"
+                      Margin="40,0" SnapsToDevicePixels="True" UseAnimation="False">
+            <local:MyLoading x:Name="Load" Text="{loc:Loc Download.Union.Loading}" Margin="20,20,20,17"
+                             HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </local:MyCard>
+    </Grid>
 </local:MyPageRight>

@@ -14,6 +14,7 @@ using PCL.Core.IO.Net;
 using PCL.Core.IO.Net.Http;
 using PCL.Core.Link.UnionLink.Models;
 using PCL.Core.Logging;
+using PCL.Core.Minecraft.Profile;
 using PCL.Core.Minecraft.Profile.Models;
 using PCL.Core.Utils;
 using PCL.Core.Utils.Hash;
@@ -37,12 +38,16 @@ public sealed class UnionLinkAuthService
     private const string LogModule = "UnionLink";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(2);
 
+    /// <summary>当前启动器接受的 muapack 格式版本。当前只支持 v2。</summary>
+    public const string AcceptedFormatVersions = "2";
+
     /// <summary>进程内共享实例。</summary>
     public static UnionLinkAuthService Shared { get; } = new();
 
     private readonly Func<HttpClient> _getClient;
     private readonly TimeProvider _clock;
     private readonly SemaphoreSlim _sessionGate = new(1, 1);
+    private readonly SemaphoreSlim _profileRefreshGate = new(1, 1);
     private UnionLinkSession? _session;
     private int _restored;
 
@@ -427,6 +432,143 @@ public sealed class UnionLinkAuthService
                 Lang.Text("Link.Union.DirectoryInvalid"));
     }
 
+    #endregion
+
+    #region 服务器发布（Launcher）
+
+    /// <summary>
+    ///     使用档案绑定的会话获取服务器目录；会话缺失或接口返回 401 时会自动重新换票。
+    /// </summary>
+    public Task<Result<IReadOnlyList<UnionLinkMemberServer>, UnionLinkError>> GetServersAsync(
+        McProfile profile, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        return _WithProfileSessionAsync(profile,
+            (session, ct) => _GetAvailableMembersAsync(session, clearGlobalOnUnauthorized: false, ct),
+            token);
+    }
+
+    /// <summary>
+    ///     获取当前发布的原始清单。返回值保留响应字节与签名头，便于后续验签。
+    /// </summary>
+    public Task<Result<UnionLinkManifestResponse, UnionLinkError>> GetServerManifestAsync(
+        McProfile profile, string serverId, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverId);
+        return _WithProfileSessionAsync(profile, (session, ct) =>
+        {
+            var url = $"{LinkBase}/api/v1/servers/{Uri.EscapeDataString(serverId)}/manifest" +
+                      $"?acceptedFormatVersions={AcceptedFormatVersions}";
+            using var request = HttpRequest.Create(url).WithBearerToken(session.Token);
+            return _SendRawAsync(request, ct);
+        }, token);
+    }
+
+    /// <summary>
+    ///     发现当前发布的完整包/更新包。当前只接受格式版本 2。
+    /// </summary>
+    public Task<Result<UnionLinkPackageDownload, UnionLinkError>> GetServerPackagesAsync(
+        McProfile profile, string serverId, string? platform = null, Guid? baseReleaseId = null,
+        string? baseManifestSha256 = null, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        ArgumentException.ThrowIfNullOrWhiteSpace(serverId);
+        return _WithProfileSessionAsync(profile, (session, ct) =>
+        {
+            var url = $"{LinkBase}/api/v1/servers/{Uri.EscapeDataString(serverId)}/packages" +
+                      $"?acceptedFormatVersions={AcceptedFormatVersions}";
+            if (!string.IsNullOrWhiteSpace(platform))
+            {
+                url += $"&platform={Uri.EscapeDataString(platform)}";
+            }
+
+            if (baseReleaseId is { } releaseId)
+            {
+                url += $"&baseReleaseId={releaseId:D}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(baseManifestSha256))
+            {
+                url += $"&baseManifestSha256={Uri.EscapeDataString(baseManifestSha256)}";
+            }
+
+            using var request = HttpRequest.Create(url).WithBearerToken(session.Token);
+            return SendAsync<UnionLinkPackageDownload>(request, ct);
+        }, token);
+    }
+
+    /// <summary>
+    ///     使用档案会话执行请求；会话缺失时先换票，接口返回 401 时换票后重试一次。
+    /// </summary>
+    private async Task<Result<T, UnionLinkError>> _WithProfileSessionAsync<T>(
+        McProfile profile,
+        Func<UnionLinkSession, CancellationToken, Task<Result<T, UnionLinkError>>> action,
+        CancellationToken token)
+    {
+        var session = GetProfileSession(profile);
+        if (session is null)
+        {
+            var refreshed = await _RefreshProfileSessionAsync(profile, null, token).ConfigureAwait(false);
+            if (refreshed.IsFailure)
+            {
+                return Fail<T>(refreshed.Error);
+            }
+
+            session = refreshed.Value;
+        }
+
+        var result = await action(session, token).ConfigureAwait(false);
+        if (result.IsSuccess || result.Error.Kind != UnionLinkErrorKind.AuthenticationRequired)
+        {
+            return result;
+        }
+
+        var retry = await _RefreshProfileSessionAsync(profile, session.Token, token).ConfigureAwait(false);
+        if (retry.IsFailure)
+        {
+            return Fail<T>(retry.Error);
+        }
+
+        return await action(retry.Value, token).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     重新为档案换票并写回档案。并发调用会合并，staleToken 用于判断是否已有其他请求刷新过。
+    /// </summary>
+    private async Task<Result<UnionLinkSession, UnionLinkError>> _RefreshProfileSessionAsync(
+        McProfile profile, string? staleToken, CancellationToken token)
+    {
+        await _profileRefreshGate.WaitAsync(token).ConfigureAwait(false);
+        try
+        {
+            if (GetProfileSession(profile) is { } current
+                && (staleToken is null || !string.Equals(current.Token, staleToken, StringComparison.Ordinal)))
+            {
+                return Result<UnionLinkSession, UnionLinkError>.Ok(current);
+            }
+
+            var result = await LauncherGameLoginAsync(profile, token).ConfigureAwait(false);
+            if (result.IsSuccess)
+            {
+                profile.UnionLinkToken = result.Value.Token;
+                profile.UnionLinkExpiresAt = result.Value.ExpiresAt;
+                ProfileService.Save();
+                LogWrapper.Info(LogModule, "Union Link 档案会话已自动刷新");
+            }
+
+            return result;
+        }
+        finally
+        {
+            _profileRefreshGate.Release();
+        }
+    }
+
+    #endregion
+
+    #region 会话与服务器目录（内部）
+
     private Result<UnionLinkSession, UnionLinkError> CreateSession(string? token, DateTimeOffset? expiresAt)
     {
         if (!IsValidToken(token) || expiresAt is not { } expiration || expiration <= _clock.GetUtcNow())
@@ -528,22 +670,7 @@ public sealed class UnionLinkAuthService
 
             if (!response.IsSuccess)
             {
-                var status = response.StatusCode;
-                var errorBody = await _ReadErrorBodyAsync(response, token).ConfigureAwait(false);
-                LastErrorResponseBody = errorBody;
-                LogWrapper.Warn(LogModule, string.IsNullOrWhiteSpace(errorBody)
-                    ? $"Union Link 请求返回 HTTP {(int)status}（响应体为空）"
-                    : $"Union Link 请求返回 HTTP {(int)status}，响应体: {_TruncateForLog(errorBody)}");
-                return status switch
-                {
-                    HttpStatusCode.Unauthorized => Err<T>(UnionLinkErrorKind.AuthenticationRequired,
-                        Lang.Text("Link.Union.AuthenticationRequired")),
-                    HttpStatusCode.Forbidden => Err<T>(UnionLinkErrorKind.Forbidden,
-                        Lang.Text("Link.Union.Forbidden")),
-                    HttpStatusCode.TooManyRequests => Err<T>(UnionLinkErrorKind.RateLimited,
-                        Lang.Text("Link.Union.RateLimited")),
-                    _ => Err<T>(UnionLinkErrorKind.Network, Lang.Text("Link.Union.HttpFailed", (int)status))
-                };
+                return await _FailFromResponseAsync<T>(response, token).ConfigureAwait(false);
             }
 
             var data = await response.AsJsonAsync<T>(cancellationToken: token).ConfigureAwait(false);
@@ -568,6 +695,70 @@ public sealed class UnionLinkAuthService
             LogWrapper.Warn(ex, LogModule, "Union Link 请求失败");
             return Err<T>(UnionLinkErrorKind.Network, Lang.Text("Link.Union.NetworkFailed"));
         }
+    }
+
+    /// <summary>
+    ///     读取原始响应字节（用于发布清单），同时保留签名相关响应头。
+    /// </summary>
+    private async Task<Result<UnionLinkManifestResponse, UnionLinkError>> _SendRawAsync(
+        HttpRequestMessage request, CancellationToken token)
+    {
+        try
+        {
+            using var response = await request
+                .SendAsync(_getClient(), false, false, retryTimes: 0, cancellationToken: token)
+                .ConfigureAwait(false);
+
+            if (!response.IsSuccess)
+            {
+                return await _FailFromResponseAsync<UnionLinkManifestResponse>(response, token).ConfigureAwait(false);
+            }
+
+            var content = await response.Content.ReadAsByteArrayAsync(token).ConfigureAwait(false);
+            return Result<UnionLinkManifestResponse, UnionLinkError>.Ok(new UnionLinkManifestResponse(
+                content,
+                _GetHeader(response, "X-MUA-Manifest-Sha256"),
+                _GetHeader(response, "X-MUA-Signing-Key"),
+                _GetHeader(response, "X-MUA-Signature"),
+                _GetHeader(response, "X-MUA-Signature-Algorithm")));
+        }
+        catch (Exception ex) when (ex is HttpRequestException or IOException or TimeoutException
+                                   || (ex is OperationCanceledException && !token.IsCancellationRequested))
+        {
+            LogWrapper.Warn(ex, LogModule, "Union Link 发布清单请求失败");
+            return Err<UnionLinkManifestResponse>(UnionLinkErrorKind.Network, Lang.Text("Link.Union.NetworkFailed"));
+        }
+    }
+
+    private async Task<Result<T, UnionLinkError>> _FailFromResponseAsync<T>(
+        HttpResponseMessage response, CancellationToken token)
+    {
+        var status = response.StatusCode;
+        var errorBody = await _ReadErrorBodyAsync(response, token).ConfigureAwait(false);
+        LastErrorResponseBody = errorBody;
+        LogWrapper.Warn(LogModule, string.IsNullOrWhiteSpace(errorBody)
+            ? $"Union Link 请求返回 HTTP {(int)status}（响应体为空）"
+            : $"Union Link 请求返回 HTTP {(int)status}，响应体: {_TruncateForLog(errorBody)}");
+        return _MapStatus<T>(status);
+    }
+
+    private static Result<T, UnionLinkError> _MapStatus<T>(HttpStatusCode status)
+    {
+        return status switch
+        {
+            HttpStatusCode.Unauthorized => Err<T>(UnionLinkErrorKind.AuthenticationRequired,
+                Lang.Text("Link.Union.AuthenticationRequired")),
+            HttpStatusCode.Forbidden => Err<T>(UnionLinkErrorKind.Forbidden,
+                Lang.Text("Link.Union.Forbidden")),
+            HttpStatusCode.TooManyRequests => Err<T>(UnionLinkErrorKind.RateLimited,
+                Lang.Text("Link.Union.RateLimited")),
+            _ => Err<T>(UnionLinkErrorKind.Network, Lang.Text("Link.Union.HttpFailed", (int)status))
+        };
+    }
+
+    private static string? _GetHeader(HttpResponseMessage response, string name)
+    {
+        return response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
     }
 
     /// <summary>

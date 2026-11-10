@@ -729,6 +729,17 @@
     <sys:String x:Key="Download.Left.Shader">光影包</sys:String>
     <sys:String x:Key="Download.Left.World">世界</sys:String>
 
+    <!-- Download.Union -->
+
+    <sys:String x:Key="Download.Union.Address">服务器地址：{0}</sys:String>
+    <sys:String x:Key="Download.Union.Download">下载</sys:String>
+    <sys:String x:Key="Download.Union.DownloadLater">下载功能将在后续版本开放。</sys:String>
+    <sys:String x:Key="Download.Union.Empty">当前没有可用的 Union 服务器整合包。</sys:String>
+    <sys:String x:Key="Download.Union.Loading">正在获取 Union 服务器列表...</sys:String>
+    <sys:String x:Key="Download.Union.Organization">组织：{0}</sys:String>
+    <sys:String x:Key="Download.Union.Pack">整合包：{0}</sys:String>
+    <sys:String x:Key="Download.Union.ProfileRequired">请先选择一个已登录的外置（Yggdrasil）档案。</sys:String>
+
     <!-- Download.Source -->
 
     <sys:String x:Key="Download.Source.CleanroomOfficial">Cleanroom 官方源</sys:String>

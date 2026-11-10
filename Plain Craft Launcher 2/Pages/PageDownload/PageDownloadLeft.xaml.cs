@@ -187,15 +187,8 @@ public partial class PageDownloadLeft : IRefreshable
             }
             case FormMain.PageSubType.DownloadUnionPackage:
             {
-                Comp.compProjectCache.Clear();
-                Comp.compFilesCache.Clear();
                 if (Launcher.frmDownloadUnionPack is not null)
-                {
-                    Launcher.frmDownloadUnionPack.Content.storage = new Comp.CompProjectStorage();
-                    Launcher.frmDownloadUnionPack.Content.page = 0;
                     Launcher.frmDownloadUnionPack.PageLoaderRestart();
-                }
-
                 ItemUnionPack.Checked = true;
                 break;
             }
