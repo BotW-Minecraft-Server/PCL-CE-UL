@@ -23,8 +23,9 @@ namespace PCL.Core.Link.UnionLink;
 /// <summary>
 ///     Union Link（MC高校联盟）启动器接口的底层实现。
 ///     <para>
-///         支持的流程：浏览器登录（暂时不对接）、令牌、退出登录、获取服务器目录。
-///         会话保存在内存中，成功登录后会同步写入本地配置以便重启后继续使用。
+///         支持的流程：浏览器登录（暂时不对接）、游戏令牌换票、退出登录、获取服务器目录。
+///         游戏换票得到的会话与 <see cref="McProfile" /> 绑定，由调用方随档案一起持久化；
+///         浏览器登录的会话仍保存在内存并写入全局配置。
 ///     </para>
 /// </summary>
 public sealed class UnionLinkAuthService
@@ -52,7 +53,8 @@ public sealed class UnionLinkAuthService
     }
 
     /// <summary>
-    ///     当前仍然有效的会话；已过期或未登录时返回 <see langword="null" />。
+    ///     当前仍然有效的浏览器登录会话；已过期或未登录时返回 <see langword="null" />。
+    ///     通过 Yggdrasil 换票得到的会话与档案绑定，请使用 <see cref="GetProfileSession" /> 读取。
     /// </summary>
     public UnionLinkSession? CurrentSession
     {
@@ -77,6 +79,18 @@ public sealed class UnionLinkAuthService
     ///     成功请求不会清空该值，便于断点调试时通过 <c>UnionLinkAuthService.Shared.LastErrorResponseBody</c> 查看。
     /// </summary>
     public string? LastErrorResponseBody { get; private set; }
+
+    /// <summary>
+    ///     读取绑定在指定档案上的 Union Link 会话；尚未换票或已过期时返回 <see langword="null" />。
+    /// </summary>
+    public UnionLinkSession? GetProfileSession(McProfile profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        return IsValidToken(profile.UnionLinkToken) && profile.UnionLinkExpiresAt is { } expiration
+               && expiration > _clock.GetUtcNow()
+            ? new UnionLinkSession(profile.UnionLinkToken!, expiration)
+            : null;
+    }
 
     #region 浏览器登录
 
@@ -293,7 +307,7 @@ public sealed class UnionLinkAuthService
                 return Err<UnionLinkSession>(UnionLinkErrorKind.Protocol, Lang.Text("Link.Union.ExchangeRejected"));
             }
 
-            return StoreSession(response.Token, response.ExpiresAt);
+            return CreateSession(response.Token, response.ExpiresAt);
         }
         finally
         {
@@ -368,23 +382,38 @@ public sealed class UnionLinkAuthService
         }
     }
 
-    /// <summary>获取当前会话可以访问的分发服务器。</summary>
-    public async Task<Result<IReadOnlyList<UnionLinkMemberServer>, UnionLinkError>> GetAvailableMembersAsync(
+    /// <summary>获取当前浏览器登录会话可以访问的分发服务器。</summary>
+    public Task<Result<IReadOnlyList<UnionLinkMemberServer>, UnionLinkError>> GetAvailableMembersAsync(
         CancellationToken token = default)
     {
         token.ThrowIfCancellationRequested();
         if (CurrentSession is not { } session)
         {
-            return Err<IReadOnlyList<UnionLinkMemberServer>>(UnionLinkErrorKind.AuthenticationRequired,
-                Lang.Text("Link.Union.LoginRequired"));
+            return Task.FromResult(Err<IReadOnlyList<UnionLinkMemberServer>>(
+                UnionLinkErrorKind.AuthenticationRequired, Lang.Text("Link.Union.LoginRequired")));
         }
 
+        return _GetAvailableMembersAsync(session, clearGlobalOnUnauthorized: true, token);
+    }
+
+    /// <summary>使用指定会话获取可访问的分发服务器（可用于档案绑定的会话）。</summary>
+    public Task<Result<IReadOnlyList<UnionLinkMemberServer>, UnionLinkError>> GetAvailableMembersAsync(
+        UnionLinkSession session, CancellationToken token = default)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        token.ThrowIfCancellationRequested();
+        return _GetAvailableMembersAsync(session, clearGlobalOnUnauthorized: false, token);
+    }
+
+    private async Task<Result<IReadOnlyList<UnionLinkMemberServer>, UnionLinkError>> _GetAvailableMembersAsync(
+        UnionLinkSession session, bool clearGlobalOnUnauthorized, CancellationToken token)
+    {
         using var request = HttpRequest.Create(LinkBase + "/api/v1/servers").WithBearerToken(session.Token);
         var result = await SendAsync<UnionLinkServerDirectory>(request, token).ConfigureAwait(false);
         if (result.IsFailure)
         {
-            // 仅当失败的仍是被拒绝的那一份会话时才清除，避免覆盖并发建立的新会话
-            if (result.Error.Kind == UnionLinkErrorKind.AuthenticationRequired)
+            // 仅当失败的仍是被拒绝的那一份全局会话时才清除，避免覆盖并发建立的新会话
+            if (clearGlobalOnUnauthorized && result.Error.Kind == UnionLinkErrorKind.AuthenticationRequired)
             {
                 _ClearSessionIf(session);
             }
@@ -398,17 +427,27 @@ public sealed class UnionLinkAuthService
                 Lang.Text("Link.Union.DirectoryInvalid"));
     }
 
-    private Result<UnionLinkSession, UnionLinkError> StoreSession(string? token, DateTimeOffset? expiresAt)
+    private Result<UnionLinkSession, UnionLinkError> CreateSession(string? token, DateTimeOffset? expiresAt)
     {
         if (!IsValidToken(token) || expiresAt is not { } expiration || expiration <= _clock.GetUtcNow())
         {
             return Err<UnionLinkSession>(UnionLinkErrorKind.Protocol, Lang.Text("Link.Union.InvalidSession"));
         }
 
-        var session = new UnionLinkSession(token!, expiration);
-        Volatile.Write(ref _session, session);
-        _PersistSession(session);
-        return Result<UnionLinkSession, UnionLinkError>.Ok(session);
+        return Result<UnionLinkSession, UnionLinkError>.Ok(new UnionLinkSession(token!, expiration));
+    }
+
+    private Result<UnionLinkSession, UnionLinkError> StoreSession(string? token, DateTimeOffset? expiresAt)
+    {
+        var created = CreateSession(token, expiresAt);
+        if (created.IsFailure)
+        {
+            return created;
+        }
+
+        Volatile.Write(ref _session, created.Value);
+        _PersistSession(created.Value);
+        return created;
     }
 
     private void ClearSession()

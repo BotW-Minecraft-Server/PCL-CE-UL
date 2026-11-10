@@ -274,6 +274,10 @@ public partial class ProfileService
                 .ConfigureAwait(false);
             if (result.IsSuccess)
             {
+                // Union Link 会话与档案绑定，随档案一起加密保存；下次 Yggdrasil 刷新时会再次覆盖
+                profile.UnionLinkToken = result.Value.Token;
+                profile.UnionLinkExpiresAt = result.Value.ExpiresAt;
+                Save();
                 Context.Info(
                     $"Union Link 换票成功，有效期至 {result.Value.ExpiresAt.ToLocalTime():yyyy-MM-dd HH:mm:ss}");
             }

@@ -29,6 +29,12 @@ public sealed class McProfile : SafeProfile
     [JsonPropertyName("idToken")]
     public string? IdToken { get; set; }
 
+    // Union Link（与档案绑定，随档案一起加密保存）
+    [JsonPropertyName("unionLinkToken")]
+    public string? UnionLinkToken { get; set; }
+    [JsonPropertyName("unionLinkExpiresAt")]
+    public DateTimeOffset? UnionLinkExpiresAt { get; set; }
+
     [JsonIgnore]
     public bool IsExpired => ExpiresAt is { } expires && expires <= DateTimeOffset.UtcNow.AddMinutes(1);
 
@@ -52,6 +58,8 @@ public sealed class McProfile : SafeProfile
         Password = Password,
         Provider = Provider,
         DiscoveryAddress = DiscoveryAddress,
-        IdToken = IdToken
+        IdToken = IdToken,
+        UnionLinkToken = UnionLinkToken,
+        UnionLinkExpiresAt = UnionLinkExpiresAt
     };
 }
