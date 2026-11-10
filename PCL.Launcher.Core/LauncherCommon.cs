@@ -305,6 +305,11 @@ public static class LauncherCommon
         return GetFileHash(filePath, SHA256.Create());
     }
 
+    public static string GetFileSha512(string filePath)
+    {
+        return GetFileHash(filePath, SHA512.Create());
+    }
+
     private static string GetFileHash(string filePath, HashAlgorithm algorithm)
     {
         try

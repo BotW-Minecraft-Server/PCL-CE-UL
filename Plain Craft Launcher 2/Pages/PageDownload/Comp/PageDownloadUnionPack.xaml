@@ -104,10 +104,10 @@
                                                        MaxHeight="40" TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                         <!--下载-->
-                                        <local:MyIconTextButton Grid.Column="2" Text="{loc:Loc Download.Union.Download}"
+                                        <local:MyIconTextButton Grid.Column="2" Text="{Binding ButtonText}"
                                                                 SvgIcon="lucide/download"
                                                                 ColorType="Highlight" VerticalAlignment="Center"
-                                                        Margin="14,0,0,0" Click="DownloadButton_Click" />
+                                                                Margin="14,0,0,0" Click="DownloadButton_Click" />
                                     </Grid>
                                 </local:MyCard>
                             </DataTemplate>

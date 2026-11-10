@@ -22,6 +22,9 @@ public partial class PageDownloadUnionPack
 
     private List<UnionLinkMemberServer> _servers = [];
 
+    private IReadOnlyDictionary<string, MuaPackInstalledState> _installedStates =
+        new Dictionary<string, MuaPackInstalledState>(StringComparer.Ordinal);
+
     private bool _isPopulatingOrganizations;
 
     public PageDownloadUnionPack()
@@ -39,6 +42,16 @@ public partial class PageDownloadUnionPack
         // 在 InitializeComponent 之后再挂接，避免 XAML 解析时默认选项的 SelectionChanged 早于控件字段赋值
         ComboSearchOrg.SelectionChanged += FilterChanged;
         ComboSearchSort.SelectionChanged += FilterChanged;
+        MuaPackInstallService.InstallCompleted += OnInstallCompleted;
+    }
+
+    private void OnInstallCompleted(string serverId)
+    {
+        Common.RunInUi(() =>
+        {
+            _installedStates = MuaPackInstallService.GetInstalledStates();
+            ApplyFilters();
+        });
     }
 
     private void LoaderInit()
@@ -78,6 +91,7 @@ public partial class PageDownloadUnionPack
         try
         {
             _servers = _loader.output ?? [];
+            _installedStates = MuaPackInstallService.GetInstalledStates();
             PopulateOrganizations();
             ApplyFilters();
         }
@@ -175,7 +189,10 @@ public partial class PageDownloadUnionPack
                 .ThenBy(server => server.ServerId, StringComparer.Ordinal)
         };
 
-        var items = query.Select(server => new UnionServerItemViewModel(server)).ToList();
+        var items = query
+            .Select(server => new UnionServerItemViewModel(server,
+                _installedStates.GetValueOrDefault(server.ServerId)))
+            .ToList();
         _vm.SetServers(items);
         HintEmpty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
@@ -204,8 +221,21 @@ public partial class PageDownloadUnionPack
         HintService.Show(Hints.Info(Lang.Text("Download.Union.PackageFetching")));
         try
         {
+            var installed = item.Installed;
+            Guid? baseReleaseId = null;
+            string? baseManifestSha256 = null;
+            if (installed is not null
+                && Guid.TryParse(installed.ReleaseId, out var parsed)
+                && !string.IsNullOrWhiteSpace(installed.TargetManifestSha256))
+            {
+                baseReleaseId = parsed;
+                baseManifestSha256 = installed.TargetManifestSha256;
+            }
+
             var result = await UnionLinkAuthService.Shared
-                .GetServerPackagesAsync(profile, item.Server.ServerId)
+                .GetServerPackagesAsync(profile, item.Server.ServerId,
+                    baseReleaseId: baseReleaseId,
+                    baseManifestSha256: baseManifestSha256)
                 .ConfigureAwait(true);
             if (result.IsFailure)
             {
@@ -232,7 +262,7 @@ public partial class PageDownloadUnionPack
             }
 
             MuaPackInstallService.DownloadAndInstall(url, size, sha256, descriptor.Version,
-                item.Server.ServerId);
+                item.Server.ServerId, installed?.InstanceName, installed);
             HintService.Show(Hints.Info(Lang.Text("Download.Union.PackageStarted")));
         }
         catch (Exception ex)

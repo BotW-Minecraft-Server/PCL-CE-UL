@@ -212,6 +212,27 @@ public sealed class UnionLinkAuthService
     }
 
     /// <summary>
+    ///     判断档案是否可用于 Union 启动器登录：
+    ///     必须是 Authlib 档案，且其认证服务器在 Union 已核准的来源列表中。
+    /// </summary>
+    public async Task<bool> IsProfileEligibleAsync(McProfile? profile, CancellationToken token = default)
+    {
+        if (profile is null || profile.ProfileType != ProfileType.Authlib) return false;
+        var server = NormalizeAuthServer(profile.Server);
+        if (server is null) return false;
+
+        var providers = await GetProvidersAsync(token).ConfigureAwait(false);
+        if (providers.IsFailure) return false;
+
+        var matches = providers.Value
+            .Where(item => item is { DirectExchange: true } && item.Id != Guid.Empty
+                           && string.Equals(NormalizeAuthServer(item.AuthApiRoot), server,
+                               StringComparison.OrdinalIgnoreCase))
+            .Take(2).ToArray();
+        return matches.Length == 1;
+    }
+
+    /// <summary>
     ///     使用已保存的外置游戏档案换取启动器令牌。认证来源根据档案的服务器地址自动匹配。
     /// </summary>
     public Task<Result<UnionLinkSession, UnionLinkError>> LauncherGameLoginAsync(McProfile profile,

@@ -52,10 +52,12 @@ public static partial class Modpack
         string? logo = null,
         string? resourceId = null,
         bool isOnlineInstall = false,
-        bool excludeOptional = false)
+        bool excludeOptional = false,
+        bool preferSha512 = false,
+        bool allowExistingInstance = false)
     {
         return _ModpackInstall(file, instanceName, logo, resourceId, isOnlineInstall, excludeOptional,
-            enforceRegionRestriction: true);
+            preferSha512, allowExistingInstance, enforceRegionRestriction: true);
     }
 
     /// <summary>
@@ -68,10 +70,12 @@ public static partial class Modpack
         string? logo = null,
         string? resourceId = null,
         bool isOnlineInstall = false,
-        bool excludeOptional = false)
+        bool excludeOptional = false,
+        bool preferSha512 = false,
+        bool allowExistingInstance = true)
     {
         return _ModpackInstall(file, instanceName, logo, resourceId, isOnlineInstall, excludeOptional,
-            enforceRegionRestriction: false);
+            preferSha512, allowExistingInstance, enforceRegionRestriction: false);
     }
 
     private static LoaderCombo<string> _ModpackInstall(
@@ -81,6 +85,8 @@ public static partial class Modpack
         string? resourceId,
         bool isOnlineInstall,
         bool excludeOptional,
+        bool preferSha512,
+        bool allowExistingInstance,
         bool enforceRegionRestriction)
     {
         if (enforceRegionRestriction)
@@ -100,7 +106,9 @@ public static partial class Modpack
                 logo,
                 resourceId,
                 isOnlineInstall,
-                excludeOptional);
+                excludeOptional,
+                preferSha512,
+                allowExistingInstance);
         }
         finally
         {
@@ -216,7 +224,9 @@ public static partial class Modpack
         string? logo,
         string? resourceId,
         bool isOnlineInstall,
-        bool excludeOptional = false)
+        bool excludeOptional = false,
+        bool preferSha512 = false,
+        bool allowExistingInstance = false)
     {
         switch (packType)
         {
@@ -253,7 +263,9 @@ public static partial class Modpack
                     logo,
                     resourceId,
                     isOnlineInstall,
-                    excludeOptional);
+                    excludeOptional,
+                    preferSha512,
+                    allowExistingInstance);
 
             case 9:
                 LauncherCommon.Log("[ModPack] 整合包种类：带启动器的压缩包");

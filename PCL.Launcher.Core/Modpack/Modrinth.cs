@@ -17,7 +17,9 @@ public static partial class Modpack
         string? logo = null,
         string? resourceId = null,
         bool isOnlineInstall = false,
-        bool excludeOptional = false)
+        bool excludeOptional = false,
+        bool preferSha512 = false,
+        bool allowExistingInstance = false)
     {
         var json = _ReadModrinthManifest(archive, archiveBaseFolder);
         var dependencies = json["dependencies"] as JsonObject;
@@ -37,7 +39,8 @@ public static partial class Modpack
             instanceName,
             loaderVersions.MinecraftVersion,
             loaderVersions.ModLoader,
-            excludeOptional);
+            excludeOptional,
+            preferSha512);
         if (fileList.Any())
             installLoaders.Add(
                 new LoaderDownload(
@@ -54,7 +57,8 @@ public static partial class Modpack
             minecraftName = loaderVersions.MinecraftVersion,
             forgeVersion = loaderVersions.ForgeVersion,
             neoForgeVersion = loaderVersions.NeoForgeVersion,
-            fabricVersion = loaderVersions.FabricVersion
+            fabricVersion = loaderVersions.FabricVersion,
+            allowExistingInstance = allowExistingInstance
         };
         var mergeLoaders = ModpackUi.CreateInstallLoader(request);
         var loaders = _CreateModrinthLoaderList(
@@ -193,7 +197,8 @@ public static partial class Modpack
         string instanceName,
         string? minecraftVersion,
         Comp.CompLoaderType modLoader,
-        bool excludeOptional)
+        bool excludeOptional,
+        bool preferSha512)
     {
         var fileList = new List<DownloadFile>();
         foreach (var file in (dynamic)json["files"]! ?? Array.Empty<JsonNode>())
@@ -219,6 +224,10 @@ public static partial class Modpack
                 throw new CancelledException();
             }
 
+            var hashes = file["hashes"];
+            var hash = preferSha512 ? hashes?["sha512"]?.ToString() : null;
+            if (string.IsNullOrWhiteSpace(hash)) hash = hashes?["sha1"]?.ToString();
+
             fileList.Add(
                 new DownloadFile(
                     Comp.CompFile.HandleModrinthDownloadUrls(
@@ -230,7 +239,7 @@ public static partial class Modpack
                     targetPath,
                     new FileChecker(
                         actualSize: ((JsonNode)file["fileSize"]).ToObject<long>(),
-                        hash: file["hashes"]["sha1"].ToString()
+                        hash: hash
                     ),
                     true));
         }

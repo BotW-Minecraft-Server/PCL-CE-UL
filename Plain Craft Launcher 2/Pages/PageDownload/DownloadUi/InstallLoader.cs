@@ -39,7 +39,8 @@ public static partial class DownloadUi
         _LogMcInstallFolders(folders, minecraftName);
 
         if (File.Exists(Path.Combine(instanceFolder, $"{request.targetInstanceName}.json"))
-            && !ignoreDump)
+            && !ignoreDump
+            && !request.allowExistingInstance)
         {
             HintService.Show(Hints.Error(Lang.Text(
                     "Minecraft.Download.Error.InstanceAlreadyExists",

@@ -35,6 +35,21 @@ public partial class ProfileService
     public static bool IsLoaded => _profiles.IsLoaded;
     public static bool IsCreatingProfile { get; set; }
 
+    /// <summary>当前选中的档案发生变化时触发。</summary>
+    public static event Action<McProfile?>? CurrentChanged;
+
+    private static void _RaiseCurrentChanged()
+    {
+        try
+        {
+            CurrentChanged?.Invoke(Current);
+        }
+        catch (Exception ex)
+        {
+            Context.Warn("通知档案变更失败", ex);
+        }
+    }
+
     [LifecycleStart]
     private static Task _Start()
     {
@@ -52,6 +67,11 @@ public partial class ProfileService
                     catch (Exception ex)
                     {
                         Context.Error("后台加载档案失败", ex);
+                    }
+                    finally
+                    {
+                        // 档案加载完成后通知订阅方刷新（例如 Union 下载入口的可见性）
+                        _RaiseCurrentChanged();
                     }
                 });
             }
@@ -122,6 +142,7 @@ public partial class ProfileService
         if (string.IsNullOrWhiteSpace(profile.ProfileId)) profile.ProfileId = Guid.NewGuid().ToString("N");
         _profiles.Add(profile, select);
         Save();
+        _RaiseCurrentChanged();
     }
 
     public static void Update(McProfile origin, McProfile current)
@@ -129,6 +150,7 @@ public partial class ProfileService
         _EnsureLoaded();
         _profiles.Update(origin, current);
         Save();
+        _RaiseCurrentChanged();
     }
 
     public static void Remove(McProfile profile)
@@ -136,6 +158,7 @@ public partial class ProfileService
         _EnsureLoaded();
         _profiles.Delete(profile);
         Save();
+        _RaiseCurrentChanged();
     }
 
     public static void Select(McProfile? profile)
@@ -143,6 +166,7 @@ public partial class ProfileService
         _EnsureLoaded();
         _profiles.Select(profile);
         Save();
+        _RaiseCurrentChanged();
     }
 
     public static void SelectAt(int index)
@@ -150,6 +174,7 @@ public partial class ProfileService
         _EnsureLoaded();
         _profiles.SelectAt(index);
         Save();
+        _RaiseCurrentChanged();
     }
 
     public static void Clear()
@@ -157,6 +182,7 @@ public partial class ProfileService
         _EnsureLoaded();
         _profiles.Clear();
         Save();
+        _RaiseCurrentChanged();
     }
 
     public static async Task<McProfile> AuthenticateAsync(ProfileType profileType, AuthenticationRequest request,

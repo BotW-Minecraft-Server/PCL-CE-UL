@@ -745,9 +745,11 @@
     <sys:String x:Key="Download.Union.PackageMissing">Union Link 返回了无效的整合包下载信息。</sys:String>
     <sys:String x:Key="Download.Union.PackageStarted">已开始下载 Union 整合包。</sys:String>
     <sys:String x:Key="Download.Union.ProfileRequired">请先选择一个已登录的外置（Yggdrasil）档案。</sys:String>
+    <sys:String x:Key="Download.Union.Reinstall">重新安装</sys:String>
     <sys:String x:Key="Download.Union.Search.Hint">搜索 Union 服务器或整合包</sys:String>
     <sys:String x:Key="Download.Union.Sort.Name">名称</sys:String>
     <sys:String x:Key="Download.Union.Sort.PackVersion">整合包版本</sys:String>
+    <sys:String x:Key="Download.Union.Update">更新</sys:String>
 
     <!-- Download.Source -->
 

@@ -1,6 +1,12 @@
-﻿using System.Windows.Controls;
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using PCL.Core.App.Localization;
+using PCL.Core.Link.UnionLink;
+using PCL.Core.Minecraft.Profile;
+using PCL.Core.Minecraft.Profile.Models;
 using PCL.Core.UI.Hints;
 
 namespace PCL;
@@ -20,6 +26,7 @@ public partial class PageDownloadLeft : IRefreshable
 
     public void Refresh(FormMain.PageSubType subType)
     {
+        RefreshUnionVisibility();
         switch (subType)
         {
             case FormMain.PageSubType.DownloadInstall:
@@ -217,6 +224,73 @@ public partial class PageDownloadLeft : IRefreshable
         InitializeComponent();
 
         AnimatedControl = PanItem;
+        Loaded += (_, _) => RefreshUnionVisibility();
+        ProfileService.CurrentChanged += OnProfileChanged;
+    }
+
+    private int _unionVisibilityVersion;
+
+    private bool _suppressPageCheck;
+
+    private void OnProfileChanged(McProfile? profile)
+    {
+        Common.RunInUi(RefreshUnionVisibility);
+    }
+
+    private void RefreshUnionVisibility()
+    {
+        _ = RefreshUnionVisibilityAsync();
+    }
+
+    private async Task RefreshUnionVisibilityAsync()
+    {
+        var version = ++_unionVisibilityVersion;
+        bool eligible;
+        try
+        {
+            eligible = await UnionLinkAuthService.Shared
+                .IsProfileEligibleAsync(ProfileService.Current)
+                .ConfigureAwait(true);
+        }
+        catch (Exception ex)
+        {
+            Common.Log(ex, "检查 Union 整合包可用性失败", Common.LogLevel.Debug);
+            eligible = false;
+        }
+
+        if (version != _unionVisibilityVersion) return;
+        ApplyUnionVisibility(eligible);
+    }
+
+    private void ApplyUnionVisibility(bool eligible)
+    {
+        if (ItemUnionPack is null) return;
+
+        ItemUnionPack.Visibility = eligible ? Visibility.Visible : Visibility.Collapsed;
+        if (eligible || PageId != FormMain.PageSubType.DownloadUnionPackage) return;
+
+        // 只有当前确实处于下载页时才允许改写右侧页面；
+        // 否则会把启动页等其它主页面的右侧内容替换成下载页。
+        var isOnDownloadPage = Launcher.frmMain.pageCurrent == FormMain.PageType.Download;
+        if (isOnDownloadPage)
+        {
+            PageChange(FormMain.PageSubType.DownloadPack);
+        }
+        else
+        {
+            PageId = FormMain.PageSubType.DownloadPack;
+        }
+
+        _suppressPageCheck = true;
+        try
+        {
+            ItemPack.SetChecked(true, false, true);
+            ItemUnionPack.SetChecked(false, false, true);
+        }
+        finally
+        {
+            _suppressPageCheck = false;
+        }
     }
 
     /// <summary>
@@ -224,6 +298,7 @@ public partial class PageDownloadLeft : IRefreshable
     /// </summary>
     private void PageCheck(object sender, Common.RouteEventArgs e)
     {
+        if (_suppressPageCheck) return;
         if (sender is MyListItem { Tag: { } tag })
             PageChange((FormMain.PageSubType)Common.Val(tag));
     }

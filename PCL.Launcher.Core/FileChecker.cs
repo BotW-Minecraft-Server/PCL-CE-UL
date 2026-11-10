@@ -59,6 +59,13 @@ public class FileChecker(
                             errorMessage.Add($"文件 SHA256 应为 {hash}，实际为 {computedHash}");
                         break;
                     }
+                    case 128:
+                    {
+                        var computedHash = LauncherCommon.GetFileSha512(localPath);
+                        if ((hash.ToLowerInvariant() ?? "") != (computedHash ?? ""))
+                            errorMessage.Add($"文件 SHA512 应为 {hash}，实际为 {computedHash}");
+                        break;
+                    }
                     default:
                     {
                         var computedHash = LauncherCommon.GetFileSha1(localPath);

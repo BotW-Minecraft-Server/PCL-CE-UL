@@ -707,9 +707,11 @@
     <sys:String x:Key="Download.Union.PackageMissing">Union Link 傳回了無效的模組包下載資訊。</sys:String>
     <sys:String x:Key="Download.Union.PackageStarted">已開始下載 Union 模組包。</sys:String>
     <sys:String x:Key="Download.Union.ProfileRequired">請先選擇一個已登入的外置（Yggdrasil）檔案。</sys:String>
+    <sys:String x:Key="Download.Union.Reinstall">重新安裝</sys:String>
     <sys:String x:Key="Download.Union.Search.Hint">搜尋 Union 伺服器或模組包</sys:String>
     <sys:String x:Key="Download.Union.Sort.Name">名稱</sys:String>
     <sys:String x:Key="Download.Union.Sort.PackVersion">模組包版本</sys:String>
+    <sys:String x:Key="Download.Union.Update">更新</sys:String>
 
     <!-- Download.Source -->
 

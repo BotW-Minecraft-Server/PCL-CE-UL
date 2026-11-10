@@ -106,4 +106,9 @@ public class McInstallRequest
     ///     必填。安装目标实例名称。
     /// </summary>
     public required string targetInstanceName;
+
+    /// <summary>
+    ///     是否允许覆盖已存在的实例。更新整合包时需要开启。
+    /// </summary>
+    public bool allowExistingInstance;
 }
