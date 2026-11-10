@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using PCL.Core.App;
 using PCL.Core.App.Configuration;
 using PCL.Core.App.IoC;
+using PCL.Core.Link.UnionLink;
 using PCL.Core.Minecraft.IdentityModel;
 using PCL.Core.Minecraft.Profile.Models;
 using PCL.Core.Minecraft.Profile.Authentication;
@@ -187,6 +188,7 @@ public partial class ProfileService
                 if (await provider.ValidateAsync(existing!, token).ConfigureAwait(false))
                 {
                     if (select) Select(existing!);
+                    await _TryExchangeUnionLinkAsync(existing!, token).ConfigureAwait(false);
                     return existing!;
                 }
             }
@@ -250,7 +252,48 @@ public partial class ProfileService
         }
 
         var matched = canUseExisting ? existing : _FindMatchingProfile(result);
-        return ApplyAuthenticationResult(result, matched, select);
+        var applied = ApplyAuthenticationResult(result, matched, select);
+        await _TryExchangeUnionLinkAsync(applied, token).ConfigureAwait(false);
+        return applied;
+    }
+
+    /// <summary>
+    /// Yggdrasil 档案验证通过后，尝试用该角色凭据换取 Union Link 启动器令牌。
+    /// 换票失败不会影响登录结果，仅在日志中记录；成功时令牌会自动保存到本地。
+    /// </summary>
+    private static async Task _TryExchangeUnionLinkAsync(McProfile profile, CancellationToken token)
+    {
+        if (profile.ProfileType != ProfileType.Authlib) return;
+
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        try
+        {
+            var result = await UnionLinkAuthService.Shared
+                .LauncherGameLoginAsync(profile, timeout.Token)
+                .ConfigureAwait(false);
+            if (result.IsSuccess)
+            {
+                Context.Info(
+                    $"Union Link 换票成功，有效期至 {result.Value.ExpiresAt.ToLocalTime():yyyy-MM-dd HH:mm:ss}");
+            }
+            else
+            {
+                Context.Debug($"Union Link 换票未完成（{result.Error.Kind}）：{result.Error.Message}");
+            }
+        }
+        catch (OperationCanceledException) when (!token.IsCancellationRequested)
+        {
+            Context.Debug("Union Link 换票超时，已跳过");
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            Context.Warn("Union Link 换票失败", ex);
+        }
     }
 
     public static McProfile ApplyAuthenticationResult(AuthenticationResult result, McProfile? existing = null, bool select = true)

@@ -1775,6 +1775,26 @@
     <sys:String x:Key="Link.Lobby.UnsupportedType">Unsupported lobby type: {0}</sys:String>
     <sys:String x:Key="Link.Lobby.WorldNameFormat">{0} / {1} ({2})</sys:String>
 
+    <!-- Link.Union -->
+
+    <sys:String x:Key="Link.Union.AttemptExpired">The game token exchange request has expired. Please retry or sign in with a browser.</sys:String>
+    <sys:String x:Key="Link.Union.AuthenticationRequired">Union Link credentials are invalid or expired. Please sign in again.</sys:String>
+    <sys:String x:Key="Link.Union.BrowserUnavailable">Could not open the browser. Check your default browser and try again.</sys:String>
+    <sys:String x:Key="Link.Union.DirectoryInvalid">Union Link returned an invalid server directory. Please try again later.</sys:String>
+    <sys:String x:Key="Link.Union.ExchangeRejected">Union Link returned an invalid exchange session. Please sign in again.</sys:String>
+    <sys:String x:Key="Link.Union.Forbidden">Union Link denied access. Check your account permissions or sign in with a browser.</sys:String>
+    <sys:String x:Key="Link.Union.HttpFailed">Union Link request failed (HTTP {0}). Please try again later.</sys:String>
+    <sys:String x:Key="Link.Union.InvalidLoginUrl">Union Link returned an invalid sign-in address.</sys:String>
+    <sys:String x:Key="Link.Union.InvalidResponse">Union Link returned an invalid response. Please try again later.</sys:String>
+    <sys:String x:Key="Link.Union.InvalidSession">Union Link returned an invalid or expired session. Please sign in again.</sys:String>
+    <sys:String x:Key="Link.Union.LoginExpired">The browser sign-in request has expired. Please start again.</sys:String>
+    <sys:String x:Key="Link.Union.LoginRequired">Please sign in to Union Link first.</sys:String>
+    <sys:String x:Key="Link.Union.LogoutFailed">Union Link did not confirm sign-out. Please try again.</sys:String>
+    <sys:String x:Key="Link.Union.NetworkFailed">Could not read the Union Link response. Check your network and try again.</sys:String>
+    <sys:String x:Key="Link.Union.ProfileUnsupported">Select a signed-in external (Yggdrasil) profile, or sign in with a browser.</sys:String>
+    <sys:String x:Key="Link.Union.ProviderUnsupported">This authentication source does not support token exchange. Please sign in with a browser.</sys:String>
+    <sys:String x:Key="Link.Union.RateLimited">Union Link request rate limit reached. Please try again later.</sys:String>
+
     <!-- Link.Mod -->
 
     <sys:String x:Key="Link.Mod.AccountBanned">Your Natayark Network account status is abnormal and may be banned!</sys:String>

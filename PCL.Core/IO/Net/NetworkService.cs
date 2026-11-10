@@ -54,6 +54,8 @@ public partial class NetworkService
 
     public const string ModrinthApi = "modrinth_api";
 
+    public const string UnionLink = "union_link";
+
 
     #endregion
     
@@ -89,6 +91,16 @@ public partial class NetworkService
         {
             c.BaseAddress = new Uri(ModrinthApiServer);
         });
+        
+        // Union Link（MU Alliance）
+        // 登录令牌只在 Union Link 域内流转，禁止自动跟随重定向以免凭据被带到其它站点
+        services.AddHttpClient(UnionLink)
+            .ConfigurePrimaryHttpMessageHandler(() =>
+            {
+                var handler = _GetSocketsHttpHandler();
+                handler.AllowAutoRedirect = false;
+                return handler;
+            });
         
         // Microsoft Entra ID
         

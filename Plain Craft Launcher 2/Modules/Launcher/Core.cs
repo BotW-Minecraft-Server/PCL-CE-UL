@@ -34,6 +34,7 @@ public static partial class Launcher
     public static PageDownloadLegacyFabric? frmDownloadLegacyFabric;
     public static PageDownloadMod? frmDownloadMod;
     public static PageDownloadPack? frmDownloadPack;
+    public static PageDownloadUnionPack? frmDownloadUnionPack;
     public static PageDownloadDataPack? frmDownloadDataPack;
     public static PageDownloadShader? frmDownloadShader;
     public static PageDownloadResourcePack? frmDownloadResourcePack;

@@ -318,6 +318,16 @@ public static partial class States
         [ConfigItem<string>("LinkNaidRefreshExpiresAt", "", ConfigSource.SharedEncrypt)] public partial string NaidRefreshExpireTime { get; set; }
 
         /// <summary>
+        /// Union Link 启动器令牌。
+        /// </summary>
+        [ConfigItem<string>("LinkUnionLauncherToken", "", ConfigSource.SharedEncrypt)] public partial string UnionLinkToken { get; set; }
+
+        /// <summary>
+        /// Union Link 启动器令牌过期时间（Unix 毫秒）。
+        /// </summary>
+        [ConfigItem<long>("LinkUnionLauncherExpiresAt", 0L, ConfigSource.SharedEncrypt)] public partial long UnionLinkExpiresAt { get; set; }
+
+        /// <summary>
         /// 首次网络测试状态。
         /// </summary>
         [ConfigItem<bool>("LinkFirstTimeNetTest", true, ConfigSource.SharedEncrypt)] public partial bool DoFirstTimeNetTest { get; set; }

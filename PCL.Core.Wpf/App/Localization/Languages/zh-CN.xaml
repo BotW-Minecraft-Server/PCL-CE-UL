@@ -722,6 +722,7 @@
     <sys:String x:Key="Download.Left.Minecraft">Minecraft</sys:String>
     <sys:String x:Key="Download.Left.Mod">模组</sys:String>
     <sys:String x:Key="Download.Left.Modpack">整合包</sys:String>
+    <sys:String x:Key="Download.Left.UnionPack">Union整合包</sys:String>
     <sys:String x:Key="Download.Left.NeoForge">NeoForge</sys:String>
     <sys:String x:Key="Download.Left.Optifine">OptiFine</sys:String>
     <sys:String x:Key="Download.Left.ResourcePack">资源包</sys:String>
@@ -1862,6 +1863,26 @@
     <sys:String x:Key="Link.Lobby.MotdFormat">PCL CE 大厅{0}</sys:String>
     <sys:String x:Key="Link.Lobby.UnsupportedType">不支持的大厅类型: {0}</sys:String>
     <sys:String x:Key="Link.Lobby.WorldNameFormat">{0} / {1} ({2})</sys:String>
+
+    <!-- Link.Union -->
+
+    <sys:String x:Key="Link.Union.AttemptExpired">游戏换票请求已失效，请重试或使用浏览器登录。</sys:String>
+    <sys:String x:Key="Link.Union.AuthenticationRequired">Union Link 凭据无效或已过期，请重新登录。</sys:String>
+    <sys:String x:Key="Link.Union.BrowserUnavailable">无法打开浏览器，请检查默认浏览器后重试。</sys:String>
+    <sys:String x:Key="Link.Union.DirectoryInvalid">Union Link 返回了无效的服务器目录，请稍后重试。</sys:String>
+    <sys:String x:Key="Link.Union.ExchangeRejected">Union Link 返回了无效的换票会话，请重新登录。</sys:String>
+    <sys:String x:Key="Link.Union.Forbidden">Union Link 拒绝访问，请检查账号权限或改用浏览器登录。</sys:String>
+    <sys:String x:Key="Link.Union.HttpFailed">Union Link 请求失败（HTTP {0}），请稍后重试。</sys:String>
+    <sys:String x:Key="Link.Union.InvalidLoginUrl">Union Link 返回了无效的登录地址。</sys:String>
+    <sys:String x:Key="Link.Union.InvalidResponse">Union Link 返回了无效的响应，请稍后重试。</sys:String>
+    <sys:String x:Key="Link.Union.InvalidSession">Union Link 返回了无效或已过期的会话，请重新登录。</sys:String>
+    <sys:String x:Key="Link.Union.LoginExpired">浏览器登录请求已过期，请重新发起登录。</sys:String>
+    <sys:String x:Key="Link.Union.LoginRequired">请先登录 Union Link。</sys:String>
+    <sys:String x:Key="Link.Union.LogoutFailed">Union Link 未确认退出，请重试。</sys:String>
+    <sys:String x:Key="Link.Union.NetworkFailed">无法读取 Union Link 响应，请检查网络后重试。</sys:String>
+    <sys:String x:Key="Link.Union.ProfileUnsupported">请选择已登录的外置（Yggdrasil）档案，或使用浏览器登录。</sys:String>
+    <sys:String x:Key="Link.Union.ProviderUnsupported">当前认证来源不支持换票，请使用浏览器登录。</sys:String>
+    <sys:String x:Key="Link.Union.RateLimited">Union Link 请求过于频繁，请稍后重试。</sys:String>
 
     <!-- Link.Mod -->
 

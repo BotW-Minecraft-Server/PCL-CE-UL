@@ -185,6 +185,20 @@ public partial class PageDownloadLeft : IRefreshable
                 ItemFavorites.Checked = true;
                 break;
             }
+            case FormMain.PageSubType.DownloadUnionPackage:
+            {
+                Comp.compProjectCache.Clear();
+                Comp.compFilesCache.Clear();
+                if (Launcher.frmDownloadUnionPack is not null)
+                {
+                    Launcher.frmDownloadUnionPack.Content.storage = new Comp.CompProjectStorage();
+                    Launcher.frmDownloadUnionPack.Content.page = 0;
+                    Launcher.frmDownloadUnionPack.PageLoaderRestart();
+                }
+
+                ItemUnionPack.Checked = true;
+                break;
+            }
         }
 
         HintService.Show(Hints.Info(Lang.Text("Download.Left.Hint.Refreshing"), log: false));
@@ -328,6 +342,13 @@ public partial class PageDownloadLeft : IRefreshable
                 if (Launcher.frmDownloadLegacyFabric is null)
                     Launcher.frmDownloadLegacyFabric = new PageDownloadLegacyFabric();
                 return Launcher.frmDownloadLegacyFabric;
+            }
+            
+            case FormMain.PageSubType.DownloadUnionPackage:
+            {
+                if (Launcher.frmDownloadUnionPack is null)
+                    Launcher.frmDownloadUnionPack = new PageDownloadUnionPack();
+                return Launcher.frmDownloadUnionPack;
             }
 
             default:

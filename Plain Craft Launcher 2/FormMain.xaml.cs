@@ -1484,6 +1484,8 @@ public partial class FormMain
         DownloadLiteLoader = 16,
         DownloadLabyMod = 17,
         DownloadLegacyFabric = 18,
+        //下载Union提供的MUA PACK
+        DownloadUnionPackage = 15,
 
         SetupLaunch = 0,
         SetupUI = 1,

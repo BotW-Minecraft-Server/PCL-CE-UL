@@ -59,6 +59,24 @@
                     </x:Array>
                 </local:MyListItem.Buttons>
             </local:MyListItem>
+            
+            <local:MyListItem x:Name="ItemUnionPack" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="15"
+                              Check="PageCheck"
+                              MinPaddingRight="35" Height="36" VerticalAlignment="Top"
+                              Title="{loc:Loc Download.Left.UnionPack}"
+                              LogoScale="0.98"
+                              SvgIcon="lucide/package">
+                <local:MyListItem.Buttons>
+                    <x:Array Type="{x:Type local:MyIconButton}">
+                        <local:MyIconButton Tag="15" ToolTip="{loc:Loc Common.Action.Refresh}"
+                                            ToolTipService.Placement="Right" Click="RefreshButton_Click"
+                                            ToolTipService.InitialShowDelay="200" ToolTipService.VerticalOffset="-1"
+                                            LogoScale="0.85"
+                                            SvgIcon="lucide/refresh-cw" />
+                    </x:Array>
+                </local:MyListItem.Buttons>
+            </local:MyListItem>
+            
             <local:MyListItem x:Name="ItemDataPack" Type="RadioBox" IsScaleAnimationEnabled="False" Tag="4"
                               Check="PageCheck"
                               MinPaddingRight="35" Height="36" VerticalAlignment="Top"

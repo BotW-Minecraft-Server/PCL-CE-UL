@@ -616,6 +616,7 @@
     <sys:String x:Key="Download.Comp.Type.DataPack">資料包</sys:String>
     <sys:String x:Key="Download.Comp.Type.Mod">模組</sys:String>
     <sys:String x:Key="Download.Comp.Type.Modpack">模組包</sys:String>
+    <sys:String x:Key="Download.Comp.Type.UnionPack">Union模組包</sys:String>
     <sys:String x:Key="Download.Comp.Type.Only">僅 {0}</sys:String>
     <sys:String x:Key="Download.Comp.Type.Plugin">外掛</sys:String>
     <sys:String x:Key="Download.Comp.Type.ResourcePack">資源包</sys:String>
@@ -1774,6 +1775,26 @@
     <sys:String x:Key="Link.Lobby.MotdFormat">PCL CE 大廳{0}</sys:String>
     <sys:String x:Key="Link.Lobby.UnsupportedType">不支援的大廳型別: {0}</sys:String>
     <sys:String x:Key="Link.Lobby.WorldNameFormat">{0} / {1} ({2})</sys:String>
+
+    <!-- Link.Union -->
+
+    <sys:String x:Key="Link.Union.AttemptExpired">遊戲換票請求已失效，請重試或使用瀏覽器登入。</sys:String>
+    <sys:String x:Key="Link.Union.AuthenticationRequired">Union Link 憑證無效或已過期，請重新登入。</sys:String>
+    <sys:String x:Key="Link.Union.BrowserUnavailable">無法開啟瀏覽器，請檢查預設瀏覽器後重試。</sys:String>
+    <sys:String x:Key="Link.Union.DirectoryInvalid">Union Link 傳回了無效的伺服器目錄，請稍後重試。</sys:String>
+    <sys:String x:Key="Link.Union.ExchangeRejected">Union Link 傳回了無效的換票工作階段，請重新登入。</sys:String>
+    <sys:String x:Key="Link.Union.Forbidden">Union Link 拒絕存取，請檢查帳戶權限或改用瀏覽器登入。</sys:String>
+    <sys:String x:Key="Link.Union.HttpFailed">Union Link 請求失敗（HTTP {0}），請稍後重試。</sys:String>
+    <sys:String x:Key="Link.Union.InvalidLoginUrl">Union Link 傳回了無效的登入位址。</sys:String>
+    <sys:String x:Key="Link.Union.InvalidResponse">Union Link 傳回了無效的回應，請稍後重試。</sys:String>
+    <sys:String x:Key="Link.Union.InvalidSession">Union Link 傳回了無效或已過期的工作階段，請重新登入。</sys:String>
+    <sys:String x:Key="Link.Union.LoginExpired">瀏覽器登入請求已過期，請重新發起登入。</sys:String>
+    <sys:String x:Key="Link.Union.LoginRequired">請先登入 Union Link。</sys:String>
+    <sys:String x:Key="Link.Union.LogoutFailed">Union Link 未確認登出，請重試。</sys:String>
+    <sys:String x:Key="Link.Union.NetworkFailed">無法讀取 Union Link 回應，請檢查網路後重試。</sys:String>
+    <sys:String x:Key="Link.Union.ProfileUnsupported">請選擇已登入的外置（Yggdrasil）檔案，或使用瀏覽器登入。</sys:String>
+    <sys:String x:Key="Link.Union.ProviderUnsupported">目前認證來源不支援換票，請使用瀏覽器登入。</sys:String>
+    <sys:String x:Key="Link.Union.RateLimited">Union Link 請求過於頻繁，請稍後重試。</sys:String>
 
     <!-- Link.Mod -->
 
