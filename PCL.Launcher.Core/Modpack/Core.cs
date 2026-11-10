@@ -51,9 +51,40 @@ public static partial class Modpack
         string? instanceName = null,
         string? logo = null,
         string? resourceId = null,
-        bool isOnlineInstall = false)
+        bool isOnlineInstall = false,
+        bool excludeOptional = false)
     {
-        RestrictedFeatures.ThrowIfRestricted("modpack-install");
+        return _ModpackInstall(file, instanceName, logo, resourceId, isOnlineInstall, excludeOptional,
+            enforceRegionRestriction: true);
+    }
+
+    /// <summary>
+    ///     供 Union 等已受信任来源使用：跳过区域功能限制，其余流程与 <see cref="ModpackInstall" /> 一致。
+    ///     必须在工作线程执行。
+    /// </summary>
+    internal static LoaderCombo<string> ModpackInstallWithoutRestriction(
+        string file,
+        string? instanceName = null,
+        string? logo = null,
+        string? resourceId = null,
+        bool isOnlineInstall = false,
+        bool excludeOptional = false)
+    {
+        return _ModpackInstall(file, instanceName, logo, resourceId, isOnlineInstall, excludeOptional,
+            enforceRegionRestriction: false);
+    }
+
+    private static LoaderCombo<string> _ModpackInstall(
+        string file,
+        string? instanceName,
+        string? logo,
+        string? resourceId,
+        bool isOnlineInstall,
+        bool excludeOptional,
+        bool enforceRegionRestriction)
+    {
+        if (enforceRegionRestriction)
+            RestrictedFeatures.ThrowIfRestricted("modpack-install");
         LauncherCommon.Log($"[ModPack] 整合包安装请求：{file}");
         ZipArchive? archive = null;
         try
@@ -68,7 +99,8 @@ public static partial class Modpack
                 instanceName,
                 logo,
                 resourceId,
-                isOnlineInstall);
+                isOnlineInstall,
+                excludeOptional);
         }
         finally
         {
@@ -183,7 +215,8 @@ public static partial class Modpack
         string? instanceName,
         string? logo,
         string? resourceId,
-        bool isOnlineInstall)
+        bool isOnlineInstall,
+        bool excludeOptional = false)
     {
         switch (packType)
         {
@@ -219,7 +252,8 @@ public static partial class Modpack
                     instanceName,
                     logo,
                     resourceId,
-                    isOnlineInstall);
+                    isOnlineInstall,
+                    excludeOptional);
 
             case 9:
                 LauncherCommon.Log("[ModPack] 整合包种类：带启动器的压缩包");

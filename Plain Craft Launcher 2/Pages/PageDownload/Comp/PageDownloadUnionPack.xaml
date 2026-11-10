@@ -106,8 +106,7 @@
                                         <!--下载-->
                                         <local:MyButton Grid.Column="2" Text="{loc:Loc Download.Union.Download}"
                                                         ColorType="Highlight" VerticalAlignment="Center"
-                                                        Margin="14,0,0,0" Click="DownloadButton_Click"
-                                                        ToolTip="{loc:Loc Download.Union.DownloadLater}" />
+                                                        Margin="14,0,0,0" Click="DownloadButton_Click" />
                                     </Grid>
                                 </local:MyCard>
                             </DataTemplate>

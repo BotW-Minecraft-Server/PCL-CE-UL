@@ -695,11 +695,16 @@
     <sys:String x:Key="Download.Union.Address">Server address: {0}</sys:String>
     <sys:String x:Key="Download.Union.Download">Download</sys:String>
     <sys:String x:Key="Download.Union.DownloadLater">Downloading will be available in a future version.</sys:String>
+    <sys:String x:Key="Download.Union.DownloadTask">Downloading Union modpack: {0}</sys:String>
     <sys:String x:Key="Download.Union.Empty">No Union server modpacks are available right now.</sys:String>
     <sys:String x:Key="Download.Union.Filter.Organization">Organization</sys:String>
     <sys:String x:Key="Download.Union.Loading">Loading Union servers...</sys:String>
     <sys:String x:Key="Download.Union.Organization">Organization: {0}</sys:String>
     <sys:String x:Key="Download.Union.Pack">Modpack: {0}</sys:String>
+    <sys:String x:Key="Download.Union.PackageFetchFailed">Failed to fetch Union modpack information. Please try again later.</sys:String>
+    <sys:String x:Key="Download.Union.PackageFetching">Fetching Union modpack information...</sys:String>
+    <sys:String x:Key="Download.Union.PackageMissing">Union Link returned invalid modpack download information.</sys:String>
+    <sys:String x:Key="Download.Union.PackageStarted">Union modpack download started.</sys:String>
     <sys:String x:Key="Download.Union.ProfileRequired">Select a signed-in external (Yggdrasil) profile first.</sys:String>
     <sys:String x:Key="Download.Union.Search.Hint">Search Union servers or modpacks</sys:String>
     <sys:String x:Key="Download.Union.Sort.Name">Name</sys:String>

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -186,7 +187,60 @@ public partial class PageDownloadUnionPack
 
     private void DownloadButton_Click(object sender, MouseButtonEventArgs e)
     {
-        HintService.Show(Hints.Info(Lang.Text("Download.Union.DownloadLater")));
+        _ = DownloadAndInstallAsync(sender);
+    }
+
+    private async Task DownloadAndInstallAsync(object sender)
+    {
+        if (sender is not FrameworkElement { DataContext: UnionServerItemViewModel item }) return;
+
+        var profile = ProfileService.Current;
+        if (profile is null || profile.ProfileType != ProfileType.Authlib)
+        {
+            HintService.Show(Hints.Error(Lang.Text("Download.Union.ProfileRequired")));
+            return;
+        }
+
+        HintService.Show(Hints.Info(Lang.Text("Download.Union.PackageFetching")));
+        try
+        {
+            var result = await UnionLinkAuthService.Shared
+                .GetServerPackagesAsync(profile, item.Server.ServerId)
+                .ConfigureAwait(true);
+            if (result.IsFailure)
+            {
+                HintService.Show(Hints.Error(result.Error.Message));
+                return;
+            }
+
+            var descriptor = result.Value;
+            var url = descriptor.Url;
+            var size = descriptor.Size;
+            var sha256 = descriptor.Sha256;
+            if (!string.Equals(descriptor.PackageType, "full", StringComparison.OrdinalIgnoreCase)
+                && descriptor.Full is { } full)
+            {
+                url = full.Url;
+                size = full.Size;
+                sha256 = full.Sha256;
+            }
+
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                HintService.Show(Hints.Error(Lang.Text("Download.Union.PackageMissing")));
+                return;
+            }
+
+            MuaPackInstallService.DownloadAndInstall(url, size, sha256, descriptor.Version,
+                item.Server.ServerId);
+            HintService.Show(Hints.Info(Lang.Text("Download.Union.PackageStarted")));
+        }
+        catch (Exception ex)
+        {
+            Common.Log(ex, "获取 Union 整合包失败", Common.LogLevel.Feedback,
+                userSummary: Lang.Text("Download.Union.PackageFetchFailed"));
+            HintService.Show(Hints.Error(Lang.Text("Download.Union.PackageFetchFailed")));
+        }
     }
 
     private void PanSearchBox_KeyDown(object sender, KeyEventArgs e)

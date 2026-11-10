@@ -16,7 +16,8 @@ public static partial class Modpack
         string? instanceName = null,
         string? logo = null,
         string? resourceId = null,
-        bool isOnlineInstall = false)
+        bool isOnlineInstall = false,
+        bool excludeOptional = false)
     {
         var json = _ReadModrinthManifest(archive, archiveBaseFolder);
         var dependencies = json["dependencies"] as JsonObject;
@@ -35,7 +36,8 @@ public static partial class Modpack
             json,
             instanceName,
             loaderVersions.MinecraftVersion,
-            loaderVersions.ModLoader);
+            loaderVersions.ModLoader,
+            excludeOptional);
         if (fileList.Any())
             installLoaders.Add(
                 new LoaderDownload(
@@ -190,12 +192,13 @@ public static partial class Modpack
         JsonObject json,
         string instanceName,
         string? minecraftVersion,
-        Comp.CompLoaderType modLoader)
+        Comp.CompLoaderType modLoader,
+        bool excludeOptional)
     {
         var fileList = new List<DownloadFile>();
         foreach (var file in (dynamic)json["files"]! ?? Array.Empty<JsonNode>())
         {
-            if (!_ShouldIncludeModrinthFile(file))
+            if (!_ShouldIncludeModrinthFile(file, excludeOptional))
                 continue;
 
             var urls = ((JsonArray)file["downloads"])
@@ -235,7 +238,7 @@ public static partial class Modpack
         return fileList;
     }
 
-    private static bool _ShouldIncludeModrinthFile(JsonNode file)
+    private static bool _ShouldIncludeModrinthFile(JsonNode file, bool excludeOptional)
     {
         var env = file["env"];
         if (env is null)
@@ -243,16 +246,16 @@ public static partial class Modpack
 
         return env["client"]!.ToString() switch
         {
-            "optional" => LaunchUi.ShowMessageBox(
-                    Lang.Text(
-                        "Minecraft.Download.Modpack.OptionalFile.Message",
-                        LauncherCommon.GetFileNameFromPath(file["path"]!.ToString())
-                    ),
-                    Lang.Text("Minecraft.Download.Modpack.OptionalFile.Title"),
-                    Lang.Text("Minecraft.Download.Modpack.OptionalFile.Download"),
-                    Lang.Text("Minecraft.Download.Modpack.OptionalFile.Skip")
-                )
-                != 2,
+            "optional" => !excludeOptional && LaunchUi.ShowMessageBox(
+                Lang.Text(
+                    "Minecraft.Download.Modpack.OptionalFile.Message",
+                    LauncherCommon.GetFileNameFromPath(file["path"]!.ToString())
+                ),
+                Lang.Text("Minecraft.Download.Modpack.OptionalFile.Title"),
+                Lang.Text("Minecraft.Download.Modpack.OptionalFile.Download"),
+                Lang.Text("Minecraft.Download.Modpack.OptionalFile.Skip")
+            )
+            != 2,
             "unsupported" => false,
             _ => true
         };
