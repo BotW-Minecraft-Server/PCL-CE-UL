@@ -83,7 +83,7 @@ public sealed class UnionLinkAuthService
         try
         {
             var verifier = S256Provider.GenerateCodeVerifier();
-            using var startRequest = HttpRequest.Create(LinkBase + LauncherPath + "/start")
+            using var startRequest = HttpRequest.CreatePost(LinkBase + LauncherPath + "/start")
                 .WithJsonContent(new { challenge = S256Provider.Instance.ComputeCodeChallenge(verifier) });
             var started = await SendAsync<UnionLinkLoginResponse>(startRequest, token).ConfigureAwait(false);
             if (started.IsFailure) return Fail<UnionLinkSession>(started.Error);
@@ -112,7 +112,7 @@ public sealed class UnionLinkAuthService
 
                 while (_clock.GetUtcNow() < attempt.ExpiresAt)
                 {
-                    using var claimRequest = HttpRequest.Create(LinkBase + LauncherPath + "/claim")
+                    using var claimRequest = HttpRequest.CreatePost(LinkBase + LauncherPath + "/claim")
                         .WithJsonContent(new { id = attempt.Id, verifier });
                     var claimed = await SendAsync<UnionLinkClaimResponse>(claimRequest, polling.Token)
                         .ConfigureAwait(false);
@@ -213,7 +213,7 @@ public sealed class UnionLinkAuthService
             var provider = matches[0];
             var verifier = S256Provider.GenerateCodeVerifier();
             var startedAt = _clock.GetUtcNow();
-            using var startRequest = HttpRequest.Create(LinkBase + LauncherPath + "/yggdrasil/start")
+            using var startRequest = HttpRequest.CreatePost(LinkBase + LauncherPath + "/yggdrasil/start")
                 .WithJsonContent(new
                 {
                     providerId = provider.Id,
@@ -232,7 +232,7 @@ public sealed class UnionLinkAuthService
                 return Err<UnionLinkSession>(UnionLinkErrorKind.Expired, Lang.Text("Link.Union.AttemptExpired"));
             }
 
-            using var exchangeRequest = HttpRequest.Create(LinkBase + LauncherPath + "/yggdrasil/exchange")
+            using var exchangeRequest = HttpRequest.CreatePost(LinkBase + LauncherPath + "/yggdrasil/exchange")
                 .WithJsonContent(new
                 {
                     attemptId = attempt.AttemptId,
@@ -286,7 +286,7 @@ public sealed class UnionLinkAuthService
 
     #endregion
 
-    #region 会话与服务器目录
+     #region 会话与服务器目录
 
     /// <summary>退出登录并清除本地保存的令牌。</summary>
     public async Task<Result<bool, UnionLinkError>> LogoutAsync(CancellationToken token = default)
@@ -296,7 +296,7 @@ public sealed class UnionLinkAuthService
         {
             if (CurrentSession is { } session)
             {
-                using var request = HttpRequest.Create(LinkBase + LauncherPath + "/logout")
+                using var request = HttpRequest.CreatePost(LinkBase + LauncherPath + "/logout")
                     .WithBearerToken(session.Token);
                 var result = await SendAsync<UnionLinkLogoutResponse>(request, token).ConfigureAwait(false);
                 var credentialRejected = result.IsFailure

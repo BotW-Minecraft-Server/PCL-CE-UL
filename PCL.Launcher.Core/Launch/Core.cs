@@ -205,7 +205,8 @@ public static partial class GameLaunch
 
     private static void _ShowPurchaseHint()
     {
-        if (ProfileService.HasMicrosoftProfile)
+        // 已解除“必须先完成一次正版验证才能使用其他验证方式”的限制
+        if (ProfileService.HasMicrosoftProfile || !Lang.IsFeaturesUnrestricted)
             return;
 
         if (Lang.IsFeaturesUnrestricted)

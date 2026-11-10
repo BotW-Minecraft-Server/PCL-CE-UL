@@ -45,7 +45,7 @@ public partial class PageLoginProfileViewModel : ViewModelBase
         }
 
         var isEmpty = profiles.Count == 0;
-        ShowMicrosoftHint = isEmpty;
+        // ShowMicrosoftHint = isEmpty; // 已解除正版验证限制
         ShowCreateHint = isEmpty;
         if (isEmpty) States.Hint.LaunchWithProfile = true;
     }
