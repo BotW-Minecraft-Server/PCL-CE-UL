@@ -17,7 +17,7 @@ public sealed class UnionServerItemViewModel(UnionLinkMemberServer server)
             var packName = server.CurrentRelease?.Name;
             return string.IsNullOrWhiteSpace(packName)
                 ? server.DisplayName
-                : string.Join(" · ", server.DisplayName, packName);
+                : string.Join(" · ", server.DisplayName, "整合包");
         }
     }
 

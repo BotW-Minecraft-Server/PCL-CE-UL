@@ -185,7 +185,7 @@ public partial class PageDownloadUnionPack
         ApplyFilters();
     }
 
-    private void DownloadButton_Click(object sender, MouseButtonEventArgs e)
+    private void DownloadButton_Click(object sender, Common.RouteEventArgs routeEventArgs)
     {
         _ = DownloadAndInstallAsync(sender);
     }

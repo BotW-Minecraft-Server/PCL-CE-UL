@@ -89,7 +89,7 @@
                                                 Margin="0,0,14,0" VerticalAlignment="Center">
                                             <Border.Background>
                                                 <ImageBrush
-                                                    ImageSource="pack://application:,,,/Plain Craft Launcher 2;component/Images/Icons/DefaultServer.png"
+                                                    ImageSource="pack://application:,,,/Plain Craft Launcher 2;component/Images/Icons/UnionPackIconDefault.png"
                                                     Stretch="UniformToFill" />
                                             </Border.Background>
                                         </Border>
@@ -104,8 +104,9 @@
                                                        MaxHeight="40" TextTrimming="CharacterEllipsis" />
                                         </StackPanel>
                                         <!--下载-->
-                                        <local:MyButton Grid.Column="2" Text="{loc:Loc Download.Union.Download}"
-                                                        ColorType="Highlight" VerticalAlignment="Center"
+                                        <local:MyIconTextButton Grid.Column="2" Text="{loc:Loc Download.Union.Download}"
+                                                                SvgIcon="lucide/download"
+                                                                ColorType="Highlight" VerticalAlignment="Center"
                                                         Margin="14,0,0,0" Click="DownloadButton_Click" />
                                     </Grid>
                                 </local:MyCard>
