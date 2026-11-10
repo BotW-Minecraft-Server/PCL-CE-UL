@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 using PCL.Core.App.Localization;
 using PCL.Core.Link.UnionLink;
 using PCL.Core.Link.UnionLink.Models;
 using PCL.Core.Minecraft.Profile;
 using PCL.Core.Minecraft.Profile.Models;
+using PCL.Core.UI.Hints;
 
 namespace PCL;
 
@@ -15,6 +18,10 @@ public partial class PageDownloadUnionPack
     private readonly PageDownloadUnionPackViewModel _vm = new();
 
     private readonly Loading.LoaderTask<bool, List<UnionLinkMemberServer>> _loader;
+
+    private List<UnionLinkMemberServer> _servers = [];
+
+    private bool _isPopulatingOrganizations;
 
     public PageDownloadUnionPack()
     {
@@ -27,11 +34,15 @@ public partial class PageDownloadUnionPack
         Loaded += (_, _) => PanBack.ScrollToHome();
         InitializeComponent();
         DataContext = _vm;
+
+        // 在 InitializeComponent 之后再挂接，避免 XAML 解析时默认选项的 SelectionChanged 早于控件字段赋值
+        ComboSearchOrg.SelectionChanged += FilterChanged;
+        ComboSearchSort.SelectionChanged += FilterChanged;
     }
 
     private void LoaderInit()
     {
-        PageLoaderInit(Load, PanLoad, PanBack, null, _loader, _ => Load_OnFinish());
+        PageLoaderInit(Load, PanLoad, PanContent, PanAlways, _loader, _ => Load_OnFinish());
     }
 
     private static void LoadServers(Loading.LoaderTask<bool, List<UnionLinkMemberServer>> task)
@@ -65,9 +76,9 @@ public partial class PageDownloadUnionPack
     {
         try
         {
-            var servers = _loader.output ?? [];
-            _vm.SetServers(servers.Select(server => new UnionServerItemViewModel(server)));
-            HintEmpty.Visibility = servers.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            _servers = _loader.output ?? [];
+            PopulateOrganizations();
+            ApplyFilters();
         }
         catch (Exception ex)
         {
@@ -77,5 +88,132 @@ public partial class PageDownloadUnionPack
                 Common.LogLevel.Feedback,
                 userSummary: Lang.Text("Download.Error.OperationFailed"));
         }
+    }
+
+    /// <summary>用当前服务器列表重建组织筛选器，并尽量保留原有选项。</summary>
+    private void PopulateOrganizations()
+    {
+        if (ComboSearchOrg is null) return;
+
+        var previousId = (ComboSearchOrg.SelectedItem as MyComboBoxItem)?.Tag?.ToString() ?? string.Empty;
+
+        _isPopulatingOrganizations = true;
+        try
+        {
+            ComboSearchOrg.Items.Clear();
+            var allItem = new MyComboBoxItem
+            {
+                Content = Lang.Text("Common.Option.All"),
+                Tag = string.Empty
+            };
+            ComboSearchOrg.Items.Add(allItem);
+
+            MyComboBoxItem? restore = null;
+            var organizations = _servers
+                .Select(server => server.Organization)
+                .Where(organization => organization is not null)
+                .GroupBy(organization => organization!.Id)
+                .Select(group => group.First()!)
+                .OrderBy(organization => organization.DisplayName, StringComparer.CurrentCulture);
+            foreach (var organization in organizations)
+            {
+                var item = new MyComboBoxItem
+                {
+                    Content = organization.DisplayName,
+                    Tag = organization.Id.ToString()
+                };
+                ComboSearchOrg.Items.Add(item);
+                if (!string.IsNullOrEmpty(previousId) && item.Tag?.ToString() == previousId)
+                {
+                    restore = item;
+                }
+            }
+
+            (restore ?? allItem).IsSelected = true;
+        }
+        finally
+        {
+            _isPopulatingOrganizations = false;
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        // 极端情况下（XAML 尚未完成控件连接）不执行过滤，等 Load_OnFinish 再刷新
+        if (ComboSearchSort is null || ComboSearchOrg is null || PanSearchBox is null || HintEmpty is null) return;
+
+        var search = PanSearchBox.Text.Trim();
+        var organizationId = (ComboSearchOrg.SelectedItem as FrameworkElement)?.Tag?.ToString() ?? string.Empty;
+        var sort = (ComboSearchSort.SelectedItem as FrameworkElement)?.Tag?.ToString() ?? "0";
+
+        IEnumerable<UnionLinkMemberServer> query = _servers;
+        if (!string.IsNullOrEmpty(organizationId))
+        {
+            query = query.Where(server => server.Organization?.Id.ToString() == organizationId);
+        }
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            query = query.Where(server =>
+                server.DisplayName.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                || server.Description.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                || (server.Organization?.DisplayName.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                    ?? false)
+                || (server.CurrentRelease?.Name.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                    ?? false)
+                || (server.CurrentRelease?.VersionLabel.Contains(search, StringComparison.CurrentCultureIgnoreCase)
+                    ?? false));
+        }
+
+        query = sort switch
+        {
+            "1" => query.OrderBy(server => server.DisplayName, StringComparer.CurrentCulture),
+            "2" => query.OrderByDescending(server => server.CurrentRelease?.VersionLabel ?? string.Empty,
+                StringComparer.OrdinalIgnoreCase),
+            _ => query.OrderBy(server => server.SortOrder)
+                .ThenBy(server => server.ServerId, StringComparer.Ordinal)
+        };
+
+        var items = query.Select(server => new UnionServerItemViewModel(server)).ToList();
+        _vm.SetServers(items);
+        HintEmpty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void PanSearchBox_Search(object sender, EventArgs e)
+    {
+        ApplyFilters();
+    }
+
+    private void DownloadButton_Click(object sender, MouseButtonEventArgs e)
+    {
+        HintService.Show(Hints.Info(Lang.Text("Download.Union.DownloadLater")));
+    }
+
+    private void PanSearchBox_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.Enter) ApplyFilters();
+    }
+
+    private void FilterChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_isPopulatingOrganizations) return;
+        ApplyFilters();
+    }
+
+    private void BtnSearchReset_Click(object sender, EventArgs e)
+    {
+        _isPopulatingOrganizations = true;
+        try
+        {
+            PanSearchBox.Text = string.Empty;
+            ComboSearchOrg.SelectedIndex = 0;
+            ComboSearchSort.SelectedIndex = 0;
+        }
+        finally
+        {
+            _isPopulatingOrganizations = false;
+        }
+
+        ApplyFilters();
     }
 }

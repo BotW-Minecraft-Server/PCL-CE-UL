@@ -697,10 +697,14 @@
     <sys:String x:Key="Download.Union.Download">下載</sys:String>
     <sys:String x:Key="Download.Union.DownloadLater">下載功能將在後續版本開放。</sys:String>
     <sys:String x:Key="Download.Union.Empty">目前沒有可用的 Union 伺服器模組包。</sys:String>
+    <sys:String x:Key="Download.Union.Filter.Organization">組織</sys:String>
     <sys:String x:Key="Download.Union.Loading">正在取得 Union 伺服器清單...</sys:String>
     <sys:String x:Key="Download.Union.Organization">組織：{0}</sys:String>
     <sys:String x:Key="Download.Union.Pack">模組包：{0}</sys:String>
     <sys:String x:Key="Download.Union.ProfileRequired">請先選擇一個已登入的外置（Yggdrasil）檔案。</sys:String>
+    <sys:String x:Key="Download.Union.Search.Hint">搜尋 Union 伺服器或模組包</sys:String>
+    <sys:String x:Key="Download.Union.Sort.Name">名稱</sys:String>
+    <sys:String x:Key="Download.Union.Sort.PackVersion">模組包版本</sys:String>
 
     <!-- Download.Source -->
 

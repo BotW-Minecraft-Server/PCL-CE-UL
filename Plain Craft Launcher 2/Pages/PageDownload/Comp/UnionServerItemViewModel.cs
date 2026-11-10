@@ -1,5 +1,3 @@
-using System.Linq;
-using PCL.Core.App.Localization;
 using PCL.Core.Link.UnionLink.Models;
 
 namespace PCL;
@@ -11,28 +9,20 @@ public sealed class UnionServerItemViewModel(UnionLinkMemberServer server)
 {
     public UnionLinkMemberServer Server { get; } = server;
 
-    public string DisplayName => Server.DisplayName;
-
-    public string Description => Server.Description;
-
-    public string PackLine
+    /// <summary>服务器名称 + 整合包名称。</summary>
+    public string TitleLine
     {
         get
         {
-            var release = Server.CurrentRelease;
-            var pack = release is null
-                ? string.Empty
-                : string.Join(" · ", new[] { release.Name, release.VersionLabel }
-                    .Where(part => !string.IsNullOrWhiteSpace(part)));
-            return Lang.Text("Download.Union.Pack", pack);
+            var packName = server.CurrentRelease?.Name;
+            return string.IsNullOrWhiteSpace(packName)
+                ? server.DisplayName
+                : string.Join(" · ", server.DisplayName, packName);
         }
     }
 
-    public string OrganizationLine =>
-        Lang.Text("Download.Union.Organization", Server.Organization?.DisplayName ?? string.Empty);
+    /// <summary>整合包版本号，界面以灰色展示。</summary>
+    public string VersionLine => server.CurrentRelease?.VersionLabel ?? string.Empty;
 
-    public string AddressLine =>
-        Lang.Text("Download.Union.Address", Server.GameAddress ?? string.Empty);
-
-    public bool HasAddress => !string.IsNullOrWhiteSpace(Server.GameAddress);
+    public string Description => server.Description;
 }

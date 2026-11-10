@@ -9,42 +9,118 @@
     <Grid>
         <local:MyScrollViewer x:Name="PanBack" VerticalScrollBarVisibility="Auto"
                               HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Margin="5">
-                <local:MyHint x:Name="HintEmpty" Margin="20,20,20,0" Theme="Blue"
-                              Text="{loc:Loc Download.Union.Empty}" Visibility="Collapsed" />
-                <ItemsControl x:Name="PanServers" Margin="20,20,20,5" ItemsSource="{Binding Servers}">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Vertical" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate DataType="{x:Type local:UnionServerItemViewModel}">
-                            <local:MyCard Title="{Binding DisplayName}" Margin="0,0,0,15">
-                                <StackPanel Margin="20,40,18,18">
-                                    <TextBlock Text="{Binding PackLine}" FontSize="13" TextWrapping="Wrap"
-                                               TextTrimming="None" />
-                                    <TextBlock Text="{Binding Description}" Margin="0,4,0,0" FontSize="12"
-                                               Foreground="{DynamicResource ColorBrush2}" TextWrapping="Wrap"
-                                               TextTrimming="None" />
-                                    <TextBlock Text="{Binding OrganizationLine}" Margin="0,4,0,0" FontSize="11"
-                                               Foreground="{DynamicResource ColorBrush3}" TextTrimming="None" />
-                                    <TextBlock Text="{Binding AddressLine}" Margin="0,2,0,0" FontSize="11"
-                                               Foreground="{DynamicResource ColorBrush3}" TextTrimming="None" />
-                                    <local:MyButton Text="{loc:Loc Download.Union.Download}" IsEnabled="False"
-                                                    Margin="0,10,0,0" HorizontalAlignment="Left"
-                                                    ToolTip="{loc:Loc Download.Union.DownloadLater}" />
-                                </StackPanel>
-                            </local:MyCard>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+            <StackPanel Margin="25,25,25,25">
+                <!-- 搜索与筛选 -->
+                <StackPanel x:Name="PanAlways" Orientation="Vertical">
+                    <local:MySearchBox x:Name="PanSearchBox" Margin="0,0,0,15"
+                                       SearchButtonVisibility="Visible"
+                                       HintText="{loc:Loc Download.Union.Search.Hint}"
+                                       Search="PanSearchBox_Search" KeyDown="PanSearchBox_KeyDown" />
+                    <local:MyCard Margin="0,0,0,15">
+                        <Grid Margin="7" HorizontalAlignment="Stretch">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="1.0*" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="1.0*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="28" />
+                            </Grid.RowDefinitions>
+                            <!--组织-->
+                            <TextBlock VerticalAlignment="Center" Grid.Row="0" Grid.Column="0"
+                                       HorizontalAlignment="Left"
+                                       Text="{loc:Loc Download.Union.Filter.Organization}"
+                                       Margin="5,0,5,0" />
+                            <local:MyComboBox x:Name="ComboSearchOrg" Grid.Row="0" Grid.Column="1"
+                                              MaxDropDownHeight="320">
+                                <local:MyComboBoxItem Content="{loc:Loc Common.Option.All}" Tag=""
+                                                      IsSelected="True" />
+                            </local:MyComboBox>
+                            <!--排序-->
+                            <TextBlock VerticalAlignment="Center" Grid.Row="0" Grid.Column="2"
+                                       HorizontalAlignment="Left"
+                                       Text="{loc:Loc Download.Comp.Filter.Sort}"
+                                       Margin="5,0,5,0" />
+                            <local:MyComboBox x:Name="ComboSearchSort" Grid.Row="0" Grid.Column="3"
+                                              MaxDropDownHeight="320">
+                                <local:MyComboBoxItem Content="{loc:Loc Common.Option.Default}" Tag="0"
+                                                      IsSelected="True" />
+                                <local:MyComboBoxItem Content="{loc:Loc Download.Union.Sort.Name}" Tag="1" />
+                                <local:MyComboBoxItem Content="{loc:Loc Download.Union.Sort.PackVersion}" Tag="2" />
+                            </local:MyComboBox>
+                            <!--按钮-->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="4">
+                                <local:MyIconButton x:Name="BtnSearchReset"
+                                                    SvgIcon="lucide/rotate-ccw"
+                                                    ToolTip="{loc:Loc Download.Comp.Filter.Reset}" LogoScale="0.9"
+                                                    Margin="3,0,0,0" Click="BtnSearchReset_Click" />
+                            </StackPanel>
+                        </Grid>
+                    </local:MyCard>
+                </StackPanel>
+                <!-- 列表 -->
+                <Grid x:Name="PanContent">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <local:MyHint x:Name="HintEmpty" Grid.Row="0" Theme="Blue"
+                                  Text="{loc:Loc Download.Union.Empty}" Margin="0,0,0,15"
+                                  Visibility="Collapsed" />
+                    <ItemsControl x:Name="PanServers" Grid.Row="1" ItemsSource="{Binding Servers}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Vertical" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type local:UnionServerItemViewModel}">
+                                <local:MyCard Margin="0,0,0,15">
+                                    <Grid Margin="18,16,18,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <!--头像-->
+                                        <Border Grid.Column="0" Width="56" Height="56" CornerRadius="28"
+                                                Margin="0,0,14,0" VerticalAlignment="Center">
+                                            <Border.Background>
+                                                <ImageBrush
+                                                    ImageSource="pack://application:,,,/Plain Craft Launcher 2;component/Images/Icons/DefaultServer.png"
+                                                    Stretch="UniformToFill" />
+                                            </Border.Background>
+                                        </Border>
+                                        <!--文字-->
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                            <TextBlock Text="{Binding TitleLine}" FontSize="14" FontWeight="Bold"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding VersionLine}" Margin="0,3,0,0" FontSize="12"
+                                                       Foreground="{DynamicResource ColorBrush3}" />
+                                            <TextBlock Text="{Binding Description}" Margin="0,3,0,0" FontSize="12"
+                                                       Foreground="{DynamicResource ColorBrush2}" TextWrapping="Wrap"
+                                                       MaxHeight="40" TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <!--下载-->
+                                        <local:MyButton Grid.Column="2" Text="{loc:Loc Download.Union.Download}"
+                                                        ColorType="Highlight" VerticalAlignment="Center"
+                                                        Margin="14,0,0,0" Click="DownloadButton_Click"
+                                                        ToolTip="{loc:Loc Download.Union.DownloadLater}" />
+                                    </Grid>
+                                </local:MyCard>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+                <!-- 加载 -->
+                <local:MyCard x:Name="PanLoad" HorizontalAlignment="Center" VerticalAlignment="Center"
+                              SnapsToDevicePixels="True" UseAnimation="False" Margin="40,30">
+                    <local:MyLoading x:Name="Load" Text="{loc:Loc Download.Union.Loading}" Margin="20,20,20,17"
+                                     HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </local:MyCard>
             </StackPanel>
         </local:MyScrollViewer>
-        <local:MyCard x:Name="PanLoad" HorizontalAlignment="Center" VerticalAlignment="Center"
-                      Margin="40,0" SnapsToDevicePixels="True" UseAnimation="False">
-            <local:MyLoading x:Name="Load" Text="{loc:Loc Download.Union.Loading}" Margin="20,20,20,17"
-                             HorizontalAlignment="Center" VerticalAlignment="Center" />
-        </local:MyCard>
     </Grid>
 </local:MyPageRight>

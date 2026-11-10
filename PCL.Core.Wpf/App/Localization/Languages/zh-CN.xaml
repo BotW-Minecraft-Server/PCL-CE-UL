@@ -735,10 +735,14 @@
     <sys:String x:Key="Download.Union.Download">下载</sys:String>
     <sys:String x:Key="Download.Union.DownloadLater">下载功能将在后续版本开放。</sys:String>
     <sys:String x:Key="Download.Union.Empty">当前没有可用的 Union 服务器整合包。</sys:String>
+    <sys:String x:Key="Download.Union.Filter.Organization">组织</sys:String>
     <sys:String x:Key="Download.Union.Loading">正在获取 Union 服务器列表...</sys:String>
     <sys:String x:Key="Download.Union.Organization">组织：{0}</sys:String>
     <sys:String x:Key="Download.Union.Pack">整合包：{0}</sys:String>
     <sys:String x:Key="Download.Union.ProfileRequired">请先选择一个已登录的外置（Yggdrasil）档案。</sys:String>
+    <sys:String x:Key="Download.Union.Search.Hint">搜索 Union 服务器或整合包</sys:String>
+    <sys:String x:Key="Download.Union.Sort.Name">名称</sys:String>
+    <sys:String x:Key="Download.Union.Sort.PackVersion">整合包版本</sys:String>
 
     <!-- Download.Source -->
 
