@@ -25,6 +25,7 @@
                         <RowDefinition Height="45" />
                         <RowDefinition Height="45" />
                         <RowDefinition Height="45" />
+                        <RowDefinition Height="45" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="40" />
@@ -53,6 +54,14 @@
                         Info="{Binding ViewModel.AboutInfo, RelativeSource={RelativeSource AncestorType=local:PageSetupAbout}}"
                         IsHitTestVisible="False"
                         Title="{Binding Name}" />
+                    <local:MyListItem
+                        x:Name="ItemAboutUnionMod"
+                        Grid.Row="3"
+                        Grid.Column="1"
+                        Margin="-5,0,15,0"
+                        Info="PCL CE Union Link 兼容改版的作者"
+                        IsHitTestVisible="False"
+                        Title="stevesensei" />
                     <Image
                         x:Name="ImgPCLLogo"
                         Grid.Row="2"
@@ -83,6 +92,18 @@
                         Grid.Row="1"  MouseLeftButtonDown="ImgPCLCommunity_Click"
                         Margin="3"
                         Source="/Plain Craft Launcher 2;component/Images/Heads/PCL-Community.png" />
+                    <Image
+                        x:Name="ImgPCLUnionTweak"
+                        Grid.Row="3"
+                        Margin="3"
+                        Source="/Plain Craft Launcher 2;component/Images/Icons/UnionPackIconDefault.png" >
+                        <Image.Clip>
+                            <EllipseGeometry
+                                Center="17 17"
+                                RadiusX="17"
+                                RadiusY="17" />
+                        </Image.Clip>
+                    </Image>
                     <local:MyButton
                         Grid.Row="0"
                         Grid.Column="2"
@@ -104,6 +125,14 @@
                         local:CustomEventService.EventData="https://github.com/PCL-Community/PCL2-CE"
                         local:CustomEventService.EventType="OpenUrl"
                         Text="{loc:Loc Setup.About.SourceCode}" />
+                    <!--改版的信息，暂时不本地化了-->
+                    <local:MyButton
+                        Grid.Row="3"
+                        Grid.Column="2"
+                        Height="35"
+                        local:CustomEventService.EventData="https://github.com/BotW-Minecraft-Server/PCL-CE-UL"
+                        local:CustomEventService.EventType="OpenUrl"
+                        Text="Union Link改版的仓库" />
                 </Grid>
             </local:MyCard>
             <local:MyCard Margin="0,0,0,15" Title="{loc:Loc Setup.About.SpecialThanks.Title}">

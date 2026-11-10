@@ -1578,7 +1578,7 @@
     <sys:String x:Key="Launch.Error.Title">启动失败</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.HidePrompt">若要永久隐藏此提示，请输入正确的 PCL CE 开发组织名称。</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.InputTitle">输入 PCL CE 开发组织名称</sys:String>
-    <sys:String x:Key="Launch.Right.CommunityHint.Message">你正在使用 PCL CE（PCL 社区版）！此版本为独立开发和维护，与原版维护路线不同，体验有所出入。&#xA;&#xA;如果你是意外下载到了 PCL CE ，我们十分建议您下载原版 PCL 长期使用，此发行版本对新手用户体验可能不友好。&#xA;此外， PCL CE 的问题请向 PCL CE 的仓库提交 Issue，不要向官方仓库反馈 PCL CE 的问题哦！</sys:String>
+    <sys:String x:Key="Launch.Right.CommunityHint.Message">你正在使用 PCL CE（PCL 社区版）的 Union Link 兼容改版！此版本修改自PCL CE，与原版PCL维护路线不同，体验有所出入。&#xA;&#xA;如果你是意外下载到了此改版 ，我们十分建议您下载原版 PCL 长期使用，此发行版本对新手用户体验可能不友好。&#xA;此外， 当前改版的问题请向改版仓库提交 Issue，不要向官方仓库或PCL CE仓库反馈本改版的问题哦！</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.Title">PCL CE 提示</sys:String>
     <sys:String x:Key="Launch.Right.CommunityHint.WrongInput">不太对哦……</sys:String>
     <sys:String x:Key="Launch.Right.Log.Title">启动日志</sys:String>
@@ -3671,7 +3671,7 @@
     <sys:String x:Key="Update.Action">更新</sys:String>
     <sys:String x:Key="Update.Available">启动器有新版本可用（{0} -&gt; {1}）&#xA;是否立即更新？</sys:String>
     <sys:String x:Key="Update.Check.Failed">无法获取最新版本信息，请检查网络连接</sys:String>
-    <sys:String x:Key="Update.CommunityNotice.Body">你正在使用来自 PCL-Community 的 PCL CE，遇到问题请不要向原版仓库反馈！&#xA;PCL-Community 及其成员与龙腾猫跃无从属关系，且均不会为您的使用做担保。&#xA;&#xA;如果你是意外下载的 PCL CE，建议下载原版 PCL 使用。&#xA;如果你是意外下载的 PCL CE，建议下载原版 PCL 使用。&#xA;如果你是意外下载的 PCL CE，建议下载原版 PCL 使用。&#xA;&#xA;该版本与原版的特性区别：&#xA;- 主题切换：仅部分固定蓝色系主题，没有计划新增其它主题。&#xA;- 百宝箱：缺失部分原版中的内容（回声洞、千万别点）。&#xA;&#xA;此提示会在启动器更新后展示一次。</sys:String>
+    <sys:String x:Key="Update.CommunityNotice.Body">你正在使用基于 PCL-Community/PCL CE 的Union Link修改版，遇到问题请不要向原版PCL或PCL CE仓库反馈！&#xA;PCL-Community 及其成员，改版作者与龙腾猫跃无从属关系，且均不会为您的使用做担保。&#xA;&#xA;如果你是意外下载到当前改版，建议下载原版 PCL 使用。&#xA;如果你是意外下载到当前改版，建议下载原版 PCL 使用。&#xA;如果你是意外下载到当前改版，建议下载原版 PCL 使用。&#xA;&#xA;该版本与原版的特性区别：&#xA;- 主题切换：仅部分固定蓝色系主题，没有计划新增其它主题。&#xA;- 百宝箱：缺失部分原版中的内容（回声洞、千万别点）。&#xA;- Union Link支持：接入了对MUA（Minecraft高校联盟）提供的Union Link和分发和更新整合包格式MUAPACK支持，该功能旨在为各个高校提供统一的整合包分发渠道。&#xA;&#xA;此提示会在启动器更新后展示一次。</sys:String>
     <sys:String x:Key="Update.CommunityNotice.Confirm">我知道了</sys:String>
     <sys:String x:Key="Update.CommunityNotice.Title">PCL CE 版本说明</sys:String>
     <sys:String x:Key="Update.Error.FetchFailed">获取启动器更新失败，请检查网络连接</sys:String>

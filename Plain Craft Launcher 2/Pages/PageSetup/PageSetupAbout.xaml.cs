@@ -41,6 +41,7 @@ public partial class PageSetupAbout : IPageView
     {
         _vm.LogoClickCommand.Execute(sender);
     }
+    
 
     public class GitHubContributor
     {
