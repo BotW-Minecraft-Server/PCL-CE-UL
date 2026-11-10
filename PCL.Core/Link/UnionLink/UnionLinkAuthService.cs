@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,11 +21,11 @@ using PCL.Core.Utils.Hash;
 namespace PCL.Core.Link.UnionLink;
 
 /// <summary>
-/// Union Link（MU Alliance）启动器接口的底层实现。
-/// <para>
-/// 支持的流程：浏览器登录（PKCE 轮询）、游戏令牌换票、退出登录、获取服务器目录。
-/// 会话保存在内存中，成功登录后会同步写入本地配置以便重启后继续使用。
-/// </para>
+///     Union Link（MC高校联盟）启动器接口的底层实现。
+///     <para>
+///         支持的流程：浏览器登录（暂时不对接）、令牌、退出登录、获取服务器目录。
+///         会话保存在内存中，成功登录后会同步写入本地配置以便重启后继续使用。
+///     </para>
 /// </summary>
 public sealed class UnionLinkAuthService
 {
@@ -51,7 +52,7 @@ public sealed class UnionLinkAuthService
     }
 
     /// <summary>
-    /// 当前仍然有效的会话；已过期或未登录时返回 <see langword="null" />。
+    ///     当前仍然有效的会话；已过期或未登录时返回 <see langword="null" />。
     /// </summary>
     public UnionLinkSession? CurrentSession
     {
@@ -61,17 +62,26 @@ public sealed class UnionLinkAuthService
             if (session is null && Interlocked.Exchange(ref _restored, 1) == 0)
             {
                 session = _RestorePersistedSession();
-                if (session is not null) Volatile.Write(ref _session, session);
+                if (session is not null)
+                {
+                    Volatile.Write(ref _session, session);
+                }
             }
 
             return session is not null && session.ExpiresAt > _clock.GetUtcNow() ? session : null;
         }
     }
 
+    /// <summary>
+    ///     最近一次请求失败时收到的原始响应正文（没有正文时为 <see langword="null" />）。
+    ///     成功请求不会清空该值，便于断点调试时通过 <c>UnionLinkAuthService.Shared.LastErrorResponseBody</c> 查看。
+    /// </summary>
+    public string? LastErrorResponseBody { get; private set; }
+
     #region 浏览器登录
 
     /// <summary>
-    /// 发起浏览器登录：打开授权页面后轮询领取启动器令牌。
+    ///     发起浏览器登录：打开授权页面后轮询领取启动器令牌。
     /// </summary>
     /// <param name="openBrowser">打开浏览器的回调，返回 <see langword="false" /> 表示无法打开。</param>
     /// <param name="token">取消令牌。</param>
@@ -86,7 +96,11 @@ public sealed class UnionLinkAuthService
             using var startRequest = HttpRequest.CreatePost(LinkBase + LauncherPath + "/start")
                 .WithJsonContent(new { challenge = S256Provider.Instance.ComputeCodeChallenge(verifier) });
             var started = await SendAsync<UnionLinkLoginResponse>(startRequest, token).ConfigureAwait(false);
-            if (started.IsFailure) return Fail<UnionLinkSession>(started.Error);
+            if (started.IsFailure)
+            {
+                return Fail<UnionLinkSession>(started.Error);
+            }
+
             var attempt = started.Value;
 
             if (attempt.Id == Guid.Empty || !Uri.TryCreate(attempt.LoginUrl, UriKind.Absolute, out var loginUrl)
@@ -96,7 +110,10 @@ public sealed class UnionLinkAuthService
             }
 
             var remaining = attempt.ExpiresAt - _clock.GetUtcNow();
-            if (remaining <= TimeSpan.Zero) return ExpiredBrowserLogin();
+            if (remaining <= TimeSpan.Zero)
+            {
+                return ExpiredBrowserLogin();
+            }
 
             using var expiry = new CancellationTokenSource(
                 remaining > TimeSpan.FromHours(1) ? TimeSpan.FromHours(1) : remaining, _clock);
@@ -117,8 +134,16 @@ public sealed class UnionLinkAuthService
                     var claimed = await SendAsync<UnionLinkClaimResponse>(claimRequest, polling.Token)
                         .ConfigureAwait(false);
                     polling.Token.ThrowIfCancellationRequested();
-                    if (_clock.GetUtcNow() >= attempt.ExpiresAt) return ExpiredBrowserLogin();
-                    if (claimed.IsFailure) return Fail<UnionLinkSession>(claimed.Error);
+                    if (_clock.GetUtcNow() >= attempt.ExpiresAt)
+                    {
+                        return ExpiredBrowserLogin();
+                    }
+
+                    if (claimed.IsFailure)
+                    {
+                        return Fail<UnionLinkSession>(claimed.Error);
+                    }
+
                     var claim = claimed.Value;
                     if (claim.Pending is not { } pending)
                     {
@@ -126,7 +151,11 @@ public sealed class UnionLinkAuthService
                             Lang.Text("Link.Union.InvalidResponse"));
                     }
 
-                    if (!pending) return StoreSession(claim.Token, claim.ExpiresAt);
+                    if (!pending)
+                    {
+                        return StoreSession(claim.Token, claim.ExpiresAt);
+                    }
+
                     await Task.Delay(PollInterval, _clock, polling.Token).ConfigureAwait(false);
                 }
 
@@ -164,7 +193,7 @@ public sealed class UnionLinkAuthService
     }
 
     /// <summary>
-    /// 使用已保存的外置游戏档案换取启动器令牌。认证来源根据档案的服务器地址自动匹配。
+    ///     使用已保存的外置游戏档案换取启动器令牌。认证来源根据档案的服务器地址自动匹配。
     /// </summary>
     public Task<Result<UnionLinkSession, UnionLinkError>> LauncherGameLoginAsync(McProfile profile,
         CancellationToken token = default)
@@ -173,7 +202,7 @@ public sealed class UnionLinkAuthService
     }
 
     /// <summary>
-    /// 使用已保存的外置游戏档案换取启动器令牌，并限制在指定认证来源内。
+    ///     使用已保存的外置游戏档案换取启动器令牌，并限制在指定认证来源内。
     /// </summary>
     public Task<Result<UnionLinkSession, UnionLinkError>> LauncherGameLoginAsync(Guid? providerId,
         McProfile profile, CancellationToken token = default)
@@ -196,13 +225,16 @@ public sealed class UnionLinkAuthService
         try
         {
             var providers = await GetProvidersAsync(token).ConfigureAwait(false);
-            if (providers.IsFailure) return Fail<UnionLinkSession>(providers.Error);
+            if (providers.IsFailure)
+            {
+                return Fail<UnionLinkSession>(providers.Error);
+            }
 
             var matches = providers.Value
                 .Where(item => item is { DirectExchange: true } && item.Id != Guid.Empty
-                               && (requestedProviderId is null || item.Id == requestedProviderId)
-                               && string.Equals(NormalizeAuthServer(item.AuthApiRoot), credential.AuthServer,
-                                   StringComparison.OrdinalIgnoreCase))
+                    && (requestedProviderId is null || item.Id == requestedProviderId)
+                    && string.Equals(NormalizeAuthServer(item.AuthApiRoot), credential.AuthServer,
+                        StringComparison.OrdinalIgnoreCase))
                 .Take(2).ToArray();
             if (matches.Length != 1)
             {
@@ -221,7 +253,11 @@ public sealed class UnionLinkAuthService
                     codeChallengeMethod = "S256"
                 });
             var started = await SendAsync<UnionLinkGameAttempt>(startRequest, token).ConfigureAwait(false);
-            if (started.IsFailure) return Fail<UnionLinkSession>(started.Error);
+            if (started.IsFailure)
+            {
+                return Fail<UnionLinkSession>(started.Error);
+            }
+
             var attempt = started.Value;
 
             if (attempt.ProviderId != provider.Id || attempt.ProviderRevision != provider.Revision
@@ -243,7 +279,11 @@ public sealed class UnionLinkAuthService
                     gameProfile = new { id = credential.ProfileId.ToString("N") }
                 });
             var exchanged = await SendAsync<UnionLinkGameLoginResponse>(exchangeRequest, token).ConfigureAwait(false);
-            if (exchanged.IsFailure) return Fail<UnionLinkSession>(exchanged.Error);
+            if (exchanged.IsFailure)
+            {
+                return Fail<UnionLinkSession>(exchanged.Error);
+            }
+
             var response = exchanged.Value;
 
             if (response.TokenType != "Bearer" || response.ProviderId != provider.Id
@@ -264,13 +304,22 @@ public sealed class UnionLinkAuthService
     private static bool TryCreateCredential(McProfile profile, out UnionLinkGameCredential credential)
     {
         credential = default!;
-        if (profile.ProfileType != ProfileType.Authlib) return false;
+        if (profile.ProfileType != ProfileType.Authlib)
+        {
+            return false;
+        }
 
         var server = NormalizeAuthServer(profile.Server);
-        if (server is null || !Guid.TryParse(profile.Uuid, out var profileId)) return false;
+        if (server is null || !Guid.TryParse(profile.Uuid, out var profileId))
+        {
+            return false;
+        }
 
         var accessToken = profile.AccessToken;
-        if (string.IsNullOrWhiteSpace(accessToken) || accessToken.Length > 16384) return false;
+        if (string.IsNullOrWhiteSpace(accessToken) || accessToken.Length > 16384)
+        {
+            return false;
+        }
 
         var clientToken = profile.ClientToken;
         credential = new UnionLinkGameCredential(server, profileId, accessToken,
@@ -281,12 +330,12 @@ public sealed class UnionLinkAuthService
     private static bool IsBase64UrlCode(string? value)
     {
         return value is { Length: 43 }
-               && value.All(character => char.IsAsciiLetterOrDigit(character) || character is '-' or '_');
+            && value.All(character => char.IsAsciiLetterOrDigit(character) || character is '-' or '_');
     }
 
     #endregion
 
-     #region 会话与服务器目录
+    #region 会话与服务器目录
 
     /// <summary>退出登录并清除本地保存的令牌。</summary>
     public async Task<Result<bool, UnionLinkError>> LogoutAsync(CancellationToken token = default)
@@ -300,7 +349,7 @@ public sealed class UnionLinkAuthService
                     .WithBearerToken(session.Token);
                 var result = await SendAsync<UnionLinkLogoutResponse>(request, token).ConfigureAwait(false);
                 var credentialRejected = result.IsFailure
-                                         && result.Error.Kind == UnionLinkErrorKind.AuthenticationRequired;
+                    && result.Error.Kind == UnionLinkErrorKind.AuthenticationRequired;
                 var confirmed = result.IsSuccess && result.Value.Ok is true;
                 if (!credentialRejected && !confirmed)
                 {
@@ -335,7 +384,11 @@ public sealed class UnionLinkAuthService
         if (result.IsFailure)
         {
             // 仅当失败的仍是被拒绝的那一份会话时才清除，避免覆盖并发建立的新会话
-            if (result.Error.Kind == UnionLinkErrorKind.AuthenticationRequired) _ClearSessionIf(session);
+            if (result.Error.Kind == UnionLinkErrorKind.AuthenticationRequired)
+            {
+                _ClearSessionIf(session);
+            }
+
             return Fail<IReadOnlyList<UnionLinkMemberServer>>(result.Error);
         }
 
@@ -378,7 +431,10 @@ public sealed class UnionLinkAuthService
         {
             var token = States.Link.UnionLinkToken;
             var expiresAt = States.Link.UnionLinkExpiresAt;
-            if (!IsValidToken(token) || expiresAt <= 0) return null;
+            if (!IsValidToken(token) || expiresAt <= 0)
+            {
+                return null;
+            }
 
             var expiration = DateTimeOffset.FromUnixTimeMilliseconds(expiresAt);
             return expiration > _clock.GetUtcNow() ? new UnionLinkSession(token, expiration) : null;
@@ -406,28 +462,39 @@ public sealed class UnionLinkAuthService
     private static bool IsValidToken(string? token)
     {
         return token is { Length: 68 } && token.StartsWith("mul_", StringComparison.Ordinal)
-                                       && token.Skip(4).All(character => character is >= '0' and <= '9'
-                                           or >= 'a' and <= 'f');
+            && token.Skip(4).All(character => character is >= '0' and <= '9'
+                or >= 'a' and <= 'f');
     }
 
     #endregion
 
     #region 请求与工具
 
+    /// <summary>
+    /// Union Link定制的请求
+    /// </summary>
+    /// <param name="request">HTTP 请求消息</param>
+    /// <param name="token">取消令牌</param>
+    /// <typeparam name="T">返回数据类型</typeparam>
+    /// <returns>请求结果</returns>
     private async Task<Result<T, UnionLinkError>> SendAsync<T>(HttpRequestMessage request, CancellationToken token)
         where T : class
     {
         try
         {
             using var response = await request
-                .SendAsync(_getClient(), addMetedata: false, enableLogging: false, retryTimes: 0,
+                .SendAsync(_getClient(), false, false, retryTimes: 0,
                     cancellationToken: token)
                 .ConfigureAwait(false);
 
             if (!response.IsSuccess)
             {
                 var status = response.StatusCode;
-                LogWrapper.Warn(LogModule, $"Union Link 请求返回 HTTP {(int)status}");
+                var errorBody = await _ReadErrorBodyAsync(response, token).ConfigureAwait(false);
+                LastErrorResponseBody = errorBody;
+                LogWrapper.Warn(LogModule, string.IsNullOrWhiteSpace(errorBody)
+                    ? $"Union Link 请求返回 HTTP {(int)status}（响应体为空）"
+                    : $"Union Link 请求返回 HTTP {(int)status}，响应体: {_TruncateForLog(errorBody)}");
                 return status switch
                 {
                     HttpStatusCode.Unauthorized => Err<T>(UnionLinkErrorKind.AuthenticationRequired,
@@ -457,7 +524,7 @@ public sealed class UnionLinkAuthService
             return Err<T>(UnionLinkErrorKind.Protocol, Lang.Text("Link.Union.InvalidResponse"));
         }
         catch (Exception ex) when (ex is HttpRequestException or IOException or TimeoutException
-                                       || (ex is OperationCanceledException && !token.IsCancellationRequested))
+                                   || (ex is OperationCanceledException && !token.IsCancellationRequested))
         {
             LogWrapper.Warn(ex, LogModule, "Union Link 请求失败");
             return Err<T>(UnionLinkErrorKind.Network, Lang.Text("Link.Union.NetworkFailed"));
@@ -465,15 +532,67 @@ public sealed class UnionLinkAuthService
     }
 
     /// <summary>
-    /// 将 Yggdrasil 服务器地址归一化为认证来源根地址。
-    /// PCL 的档案会把服务器保存为 <c>{root}/authserver</c>，Union Link 的认证来源则是 <c>root</c>。
+    ///     通过流读取失败响应的正文，方便在断点处查看服务端返回的具体错误。
+    ///     读取失败或正文为空时返回 <see langword="null" />，不影响原始的 HTTP 错误映射。
     /// </summary>
+    private static async Task<string?> _ReadErrorBodyAsync(HttpResponseMessage response, CancellationToken token)
+    {
+        try
+        {
+            await using var stream = await response.Content.ReadAsStreamAsync(token).ConfigureAwait(false);
+            using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            var body = await reader.ReadToEndAsync(token).ConfigureAwait(false);
+            return string.IsNullOrEmpty(body) ? null : body;
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is IOException or ObjectDisposedException or InvalidOperationException
+                                       or OperationCanceledException)
+        {
+            LogWrapper.Debug(ex, LogModule, "读取 Union Link 错误响应体失败");
+            return null;
+        }
+    }
+
+    /// <summary>日志中最多保留的错误响应正文长度。</summary>
+    private const int MaxErrorBodyLogLength = 4096;
+
+    private static string _TruncateForLog(string body)
+    {
+        return body.Length <= MaxErrorBodyLogLength
+            ? body
+            : body[..MaxErrorBodyLogLength] + "...";
+    }
+
+    /// <summary>
+    ///     将Ygg服务器地址转为认证来源根地址
+    ///     PCL的档案会把服务器保存为 <c>{root}/authserver</c>，UL的认证来源则是 <c>root</c>。
+    /// </summary>
+    /// <param name="address">服务器地址</param>
+    /// <returns>归一化后的认证来源根地址，如果无效则返回 <c>null</c></returns>
     internal static string? NormalizeAuthServer(string? address)
     {
-        if (string.IsNullOrWhiteSpace(address)) return null;
-        if (!Uri.TryCreate(address.Trim(), UriKind.Absolute, out var uri)) return null;
-        if (uri.Query.Length != 0 || uri.Fragment.Length != 0 || uri.UserInfo.Length != 0) return null;
-        if (uri.Scheme != Uri.UriSchemeHttps && !(uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback)) return null;
+        if (string.IsNullOrWhiteSpace(address))
+        {
+            return null;
+        }
+
+        if (!Uri.TryCreate(address.Trim(), UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        if (uri.Query.Length != 0 || uri.Fragment.Length != 0 || uri.UserInfo.Length != 0)
+        {
+            return null;
+        }
+
+        if (uri.Scheme != Uri.UriSchemeHttps && !(uri.Scheme == Uri.UriSchemeHttp && uri.IsLoopback))
+        {
+            return null;
+        }
 
         var value = uri.AbsoluteUri.TrimEnd('/');
         return value.EndsWith("/authserver", StringComparison.OrdinalIgnoreCase)
@@ -492,7 +611,10 @@ public sealed class UnionLinkAuthService
     }
 
     private sealed record UnionLinkGameCredential(
-        string AuthServer, Guid ProfileId, string AccessToken, string? ClientToken);
+        string AuthServer,
+        Guid ProfileId,
+        string AccessToken,
+        string? ClientToken);
 
     #endregion
 }
