@@ -42,10 +42,34 @@ public partial class PageDownloadUnionPack
         // 在 InitializeComponent 之后再挂接，避免 XAML 解析时默认选项的 SelectionChanged 早于控件字段赋值
         ComboSearchOrg.SelectionChanged += FilterChanged;
         ComboSearchSort.SelectionChanged += FilterChanged;
-        MuaPackInstallService.InstallCompleted += OnInstallCompleted;
+        MuaPackInstallService.InstallCompleted += OnInstallChanged;
+        MuaPackInstallService.InstallFailed += OnInstallChanged;
+        PageEnter += OnPageEnter;
     }
 
-    private void OnInstallCompleted(string serverId)
+    private bool _enteredOnce;
+
+    private void OnPageEnter()
+    {
+        // 首次进入由页面加载器负责，避免重复请求
+        if (!_enteredOnce)
+        {
+            _enteredOnce = true;
+            return;
+        }
+
+        RefreshServers();
+    }
+
+    /// <summary>重新获取服务器列表与安装状态。</summary>
+    private void RefreshServers()
+    {
+        if (_loader.State == LoadState.Loading) return;
+        _installedStates = MuaPackInstallService.GetInstalledStates();
+        PageLoaderRestart();
+    }
+
+    private void OnInstallChanged(string serverId)
     {
         Common.RunInUi(() =>
         {
@@ -197,6 +221,18 @@ public partial class PageDownloadUnionPack
         HintEmpty.Visibility = items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private void BtnRefresh_Click(object sender, EventArgs e)
+    {
+        if (_loader.State == LoadState.Loading)
+        {
+            HintService.Show(Hints.Info(Lang.Text("Download.Union.PackageFetching"), log: false));
+            return;
+        }
+
+        RefreshServers();
+        HintService.Show(Hints.Info(Lang.Text("Download.Union.Refreshing"), log: false));
+    }
+
     private void PanSearchBox_Search(object sender, EventArgs e)
     {
         ApplyFilters();
@@ -224,7 +260,7 @@ public partial class PageDownloadUnionPack
             var installed = item.Installed;
             Guid? baseReleaseId = null;
             string? baseManifestSha256 = null;
-            if (installed is not null
+            if (installed is { NeedsFullInstall: false }
                 && Guid.TryParse(installed.ReleaseId, out var parsed)
                 && !string.IsNullOrWhiteSpace(installed.TargetManifestSha256))
             {
@@ -244,17 +280,7 @@ public partial class PageDownloadUnionPack
             }
 
             var descriptor = result.Value;
-            var url = descriptor.Url;
-            var size = descriptor.Size;
-            var sha256 = descriptor.Sha256;
-            if (!string.Equals(descriptor.PackageType, "full", StringComparison.OrdinalIgnoreCase)
-                && descriptor.Full is { } full)
-            {
-                url = full.Url;
-                size = full.Size;
-                sha256 = full.Sha256;
-            }
-
+            var (url, size, sha256) = MuaPackInstallService.ResolveDownload(descriptor);
             if (string.IsNullOrWhiteSpace(url))
             {
                 HintService.Show(Hints.Error(Lang.Text("Download.Union.PackageMissing")));

@@ -737,6 +737,8 @@
     <sys:String x:Key="Download.Union.DownloadTask">下载 Union 整合包：{0}</sys:String>
     <sys:String x:Key="Download.Union.Empty">当前没有可用的 Union 服务器整合包。</sys:String>
     <sys:String x:Key="Download.Union.Filter.Organization">组织</sys:String>
+    <sys:String x:Key="Download.Union.InstallFailed">整合包安装未完成，请重新下载完整包。</sys:String>
+    <sys:String x:Key="Download.Union.InstallIncomplete">上次安装未完成，需要重新下载完整包</sys:String>
     <sys:String x:Key="Download.Union.Loading">正在获取 Union 服务器列表...</sys:String>
     <sys:String x:Key="Download.Union.Organization">组织：{0}</sys:String>
     <sys:String x:Key="Download.Union.Pack">整合包：{0}</sys:String>
@@ -745,6 +747,8 @@
     <sys:String x:Key="Download.Union.PackageMissing">Union Link 返回了无效的整合包下载信息。</sys:String>
     <sys:String x:Key="Download.Union.PackageStarted">已开始下载 Union 整合包。</sys:String>
     <sys:String x:Key="Download.Union.ProfileRequired">请先选择一个已登录的外置（Yggdrasil）档案。</sys:String>
+    <sys:String x:Key="Download.Union.Refresh">刷新</sys:String>
+    <sys:String x:Key="Download.Union.Refreshing">正在刷新 Union 整合包列表...</sys:String>
     <sys:String x:Key="Download.Union.Reinstall">重新安装</sys:String>
     <sys:String x:Key="Download.Union.Search.Hint">搜索 Union 服务器或整合包</sys:String>
     <sys:String x:Key="Download.Union.Sort.Name">名称</sys:String>
@@ -2430,6 +2434,15 @@
     <sys:String x:Key="Minecraft.Launch.Stage.Root">Minecraft 启动</sys:String>
     <sys:String x:Key="Minecraft.Launch.Stage.StartProcess">启动进程</sys:String>
     <sys:String x:Key="Minecraft.Launch.Stage.WaitWindow">等待游戏窗口出现</sys:String>
+
+    <!-- Minecraft.Launch.UnionUpdate -->
+
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Cancel">取消启动</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Continue">仍然启动</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.IncompleteMessage">服务器“{0}”的整合包上次安装未完成。&#xA;是否在启动前重新安装完整包？</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Message">服务器“{0}”已发布新版本 {1}（当前 {2}）。&#xA;是否在启动前更新整合包？</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Title">Union 整合包更新</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.UpdateNow">立即更新</sys:String>
 
     <!-- Music -->
 

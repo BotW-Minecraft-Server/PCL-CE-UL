@@ -27,16 +27,21 @@ public sealed class UnionServerItemViewModel(
     }
 
     /// <summary>整合包版本号，界面以灰色展示。</summary>
-    public string VersionLine => server.CurrentRelease?.VersionLabel ?? string.Empty;
+    public string VersionLine => NeedsFullInstall
+        ? Lang.Text("Download.Union.InstallIncomplete")
+        : server.CurrentRelease?.VersionLabel ?? string.Empty;
 
     public string Description => server.Description;
 
-    public bool IsInstalled => Installed is not null;
+    /// <summary>上次安装被中断或失败，需要重新下载完整包。</summary>
+    public bool NeedsFullInstall => Installed is { NeedsFullInstall: true };
 
-    public bool HasUpdate => Installed is not null
+    public bool IsInstalled => Installed is { NeedsFullInstall: false };
+
+    public bool HasUpdate => Installed is { NeedsFullInstall: false } installed
                              && server.CurrentRelease is { Id: var releaseId }
                              && releaseId != Guid.Empty
-                             && !string.Equals(Installed.ReleaseId, releaseId.ToString(),
+                             && !string.Equals(installed.ReleaseId, releaseId.ToString(),
                                  StringComparison.OrdinalIgnoreCase);
 
     public string ButtonText => !IsInstalled

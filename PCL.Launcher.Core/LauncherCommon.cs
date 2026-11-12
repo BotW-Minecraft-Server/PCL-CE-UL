@@ -287,7 +287,83 @@ public static class LauncherCommon
     {
         var directory = Path.GetDirectoryName(toPath);
         if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
-        File.Copy(fromPath, toPath, true);
+        CopyFileCore(fromPath, toPath);
+    }
+
+    /// <summary>
+    ///     删除文件。目标带只读、隐藏或系统属性时先清除，避免因属性导致删除失败。
+    /// </summary>
+    /// <returns>文件确实被删除时返回 true。</returns>
+    public static bool TryDeleteFile(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return false;
+            ClearBlockingAttributes(path);
+            File.Delete(path);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Log(ex, $"[File] 删除文件失败：{path}（属性：{GetAttributesText(path)}）");
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     覆盖复制。先清除目标文件上会阻止写入的属性（只读、隐藏、系统），
+    ///     失败时记录源与目标的完整路径及属性，便于定位问题。
+    /// </summary>
+    private static void CopyFileCore(string fromPath, string toPath)
+    {
+        var cleared = ClearBlockingAttributes(toPath);
+        try
+        {
+            File.Copy(fromPath, toPath, true);
+        }
+        catch (Exception ex)
+        {
+            Log(ex,
+                $"[File] 复制文件失败：{fromPath} → {toPath}" +
+                $"（源属性：{GetAttributesText(fromPath)}，" +
+                $"目标属性：{GetAttributesText(toPath)}，已清除属性：{cleared}）");
+            throw;
+        }
+    }
+
+    /// <summary>
+    ///     清除目标文件上会阻止覆盖写入的属性。
+    /// </summary>
+    /// <returns>被清除的属性描述；无需清除时返回“无”。</returns>
+    private static string ClearBlockingAttributes(string path)
+    {
+        try
+        {
+            if (!File.Exists(path)) return "无（目标不存在）";
+            var attributes = File.GetAttributes(path);
+            var blocking = attributes & (FileAttributes.ReadOnly | FileAttributes.Hidden | FileAttributes.System);
+            if (blocking == 0) return "无";
+            File.SetAttributes(path, attributes & ~blocking);
+            Log($"[File] 已清除文件属性 {blocking}：{path}");
+            return blocking.ToString();
+        }
+        catch (Exception ex)
+        {
+            Log(ex, $"[File] 清除文件属性失败，将直接尝试覆盖：{path}");
+            return "清除失败";
+        }
+    }
+
+    private static string GetAttributesText(string path)
+    {
+        try
+        {
+            return File.Exists(path) ? File.GetAttributes(path).ToString() : "不存在";
+        }
+        catch (Exception)
+        {
+            return "未知";
+        }
     }
 
     public static string GetFileMd5(string filePath)
@@ -368,11 +444,11 @@ public static class LauncherCommon
         var files = Directory.GetFiles(source, "*", SearchOption.AllDirectories);
         var done = 0;
         Directory.CreateDirectory(destination);
-        foreach (var file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+        foreach (var file in files)
         {
             var target = Path.Combine(destination, Path.GetRelativePath(source, file));
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(file, target, true);
+            CopyFileCore(file, target);
             done += 1;
             if (files.Length > 0) progress?.Invoke((double)done / files.Length);
         }

@@ -699,6 +699,8 @@
     <sys:String x:Key="Download.Union.DownloadTask">下載 Union 模組包：{0}</sys:String>
     <sys:String x:Key="Download.Union.Empty">目前沒有可用的 Union 伺服器模組包。</sys:String>
     <sys:String x:Key="Download.Union.Filter.Organization">組織</sys:String>
+    <sys:String x:Key="Download.Union.InstallFailed">模組包安裝未完成，請重新下載完整包。</sys:String>
+    <sys:String x:Key="Download.Union.InstallIncomplete">上次安裝未完成，需要重新下載完整包</sys:String>
     <sys:String x:Key="Download.Union.Loading">正在取得 Union 伺服器清單...</sys:String>
     <sys:String x:Key="Download.Union.Organization">組織：{0}</sys:String>
     <sys:String x:Key="Download.Union.Pack">模組包：{0}</sys:String>
@@ -707,6 +709,8 @@
     <sys:String x:Key="Download.Union.PackageMissing">Union Link 傳回了無效的模組包下載資訊。</sys:String>
     <sys:String x:Key="Download.Union.PackageStarted">已開始下載 Union 模組包。</sys:String>
     <sys:String x:Key="Download.Union.ProfileRequired">請先選擇一個已登入的外置（Yggdrasil）檔案。</sys:String>
+    <sys:String x:Key="Download.Union.Refresh">重新整理</sys:String>
+    <sys:String x:Key="Download.Union.Refreshing">正在重新整理 Union 模組包清單...</sys:String>
     <sys:String x:Key="Download.Union.Reinstall">重新安裝</sys:String>
     <sys:String x:Key="Download.Union.Search.Hint">搜尋 Union 伺服器或模組包</sys:String>
     <sys:String x:Key="Download.Union.Sort.Name">名稱</sys:String>
@@ -2339,6 +2343,15 @@
     <sys:String x:Key="Minecraft.Launch.Stage.Root">Minecraft 啟動</sys:String>
     <sys:String x:Key="Minecraft.Launch.Stage.StartProcess">啟動處理程式</sys:String>
     <sys:String x:Key="Minecraft.Launch.Stage.WaitWindow">等待遊戲視窗出現</sys:String>
+
+    <!-- Minecraft.Launch.UnionUpdate -->
+
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Cancel">取消啟動</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Continue">仍然啟動</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.IncompleteMessage">伺服器「{0}」的模組包上次安裝未完成。&#xA;是否在啟動前重新安裝完整包？</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Message">伺服器「{0}」已發布新版本 {1}（目前 {2}）。&#xA;是否在啟動前更新模組包？</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Title">Union 模組包更新</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.UpdateNow">立即更新</sys:String>
 
     <!-- Music -->
 

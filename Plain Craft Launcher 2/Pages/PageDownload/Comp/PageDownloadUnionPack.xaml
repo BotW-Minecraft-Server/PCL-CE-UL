@@ -52,6 +52,10 @@
                             </local:MyComboBox>
                             <!--按钮-->
                             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="4">
+                                <local:MyIconButton x:Name="BtnRefresh"
+                                                    SvgIcon="lucide/refresh-cw"
+                                                    ToolTip="{loc:Loc Download.Union.Refresh}" LogoScale="0.9"
+                                                    Margin="3,0,0,0" Click="BtnRefresh_Click" />
                                 <local:MyIconButton x:Name="BtnSearchReset"
                                                     SvgIcon="lucide/rotate-ccw"
                                                     ToolTip="{loc:Loc Download.Comp.Filter.Reset}" LogoScale="0.9"

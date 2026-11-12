@@ -387,6 +387,9 @@ public static partial class GameLaunch
     {
         LaunchUi.ShowLaunchingPage();
         _RunLaunchPrecheck();
+        if (!_ConfirmUnionPackUpToDate())
+            throw new CancelledException();
+
 
         try
         {
@@ -412,8 +415,64 @@ public static partial class GameLaunch
         }
         catch (Exception ex)
         {
+            isLaunching = false;
             _LogLaunchFailure(ex);
             throw;
+        }
+    }
+
+    private static readonly Dictionary<string, string> _ignoredUnionReleases =
+        new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    ///     启动前检查当前实例的 Union 整合包是否有新版本，并询问玩家。
+    /// </summary>
+    /// <returns>false 表示本次启动应当取消（玩家选择更新或取消启动）。</returns>
+    private static bool _ConfirmUnionPackUpToDate()
+    {
+        try
+        {
+            var instance = InstanceList.McMcInstanceSelected;
+            if (instance is null) return true;
+
+            var notice = MuaPackInstallService.CheckUpdate(instance.Name);
+            if (notice is null) return true;
+            if (_ignoredUnionReleases.TryGetValue(instance.Name, out var ignored)
+                && string.Equals(ignored, notice.LatestVersion, StringComparison.OrdinalIgnoreCase))
+                return true;
+            if (LaunchUi.Current is null) return true;
+
+            McLaunchLog($"检测到 Union 整合包新版本 {notice.LatestVersion}（当前 {notice.InstalledVersion}）");
+            var message = notice.NeedsFullInstall
+                ? Lang.Text("Minecraft.Launch.UnionUpdate.IncompleteMessage", notice.ServerName)
+                : Lang.Text("Minecraft.Launch.UnionUpdate.Message",
+                    notice.ServerName, notice.LatestVersion, notice.InstalledVersion);
+            var button = LaunchUi.ShowMessageBox(
+                message,
+                Lang.Text("Minecraft.Launch.UnionUpdate.Title"),
+                Lang.Text("Minecraft.Launch.UnionUpdate.UpdateNow"),
+                Lang.Text("Minecraft.Launch.UnionUpdate.Continue"),
+                Lang.Text("Minecraft.Launch.UnionUpdate.Cancel"),
+                forceWait: true);
+
+            switch (button)
+            {
+                case 1:
+                    MuaPackInstallService.StartUpdate(notice.ServerId, notice.InstanceName);
+                    LauncherUi.Interaction?.ShowHint(
+                        Lang.Text("Download.Union.PackageStarted"), NotificationType.Info);
+                    return false;
+                case 2:
+                    _ignoredUnionReleases[instance.Name] = notice.LatestVersion;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+        catch (Exception ex)
+        {
+            LauncherCommon.Log(ex, "[MuaPack] 启动前检查整合包更新失败");
+            return true;
         }
     }
 

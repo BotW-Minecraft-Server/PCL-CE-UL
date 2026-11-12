@@ -698,6 +698,8 @@
     <sys:String x:Key="Download.Union.DownloadTask">Downloading Union modpack: {0}</sys:String>
     <sys:String x:Key="Download.Union.Empty">No Union server modpacks are available right now.</sys:String>
     <sys:String x:Key="Download.Union.Filter.Organization">Organization</sys:String>
+    <sys:String x:Key="Download.Union.InstallFailed">The modpack installation did not finish. Please download the full package again.</sys:String>
+    <sys:String x:Key="Download.Union.InstallIncomplete">The last installation did not finish; download the full package again</sys:String>
     <sys:String x:Key="Download.Union.Loading">Loading Union servers...</sys:String>
     <sys:String x:Key="Download.Union.Organization">Organization: {0}</sys:String>
     <sys:String x:Key="Download.Union.Pack">Modpack: {0}</sys:String>
@@ -706,6 +708,8 @@
     <sys:String x:Key="Download.Union.PackageMissing">Union Link returned invalid modpack download information.</sys:String>
     <sys:String x:Key="Download.Union.PackageStarted">Union modpack download started.</sys:String>
     <sys:String x:Key="Download.Union.ProfileRequired">Select a signed-in external (Yggdrasil) profile first.</sys:String>
+    <sys:String x:Key="Download.Union.Refresh">Refresh</sys:String>
+    <sys:String x:Key="Download.Union.Refreshing">Refreshing the Union modpack list...</sys:String>
     <sys:String x:Key="Download.Union.Reinstall">Reinstall</sys:String>
     <sys:String x:Key="Download.Union.Search.Hint">Search Union servers or modpacks</sys:String>
     <sys:String x:Key="Download.Union.Sort.Name">Name</sys:String>
@@ -2338,6 +2342,15 @@
     <sys:String x:Key="Minecraft.Launch.Stage.Root">Minecraft launch</sys:String>
     <sys:String x:Key="Minecraft.Launch.Stage.StartProcess">Start process</sys:String>
     <sys:String x:Key="Minecraft.Launch.Stage.WaitWindow">Wait for appearance</sys:String>
+
+    <!-- Minecraft.Launch.UnionUpdate -->
+
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Cancel">Cancel launch</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Continue">Launch anyway</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.IncompleteMessage">The last installation of the modpack from server "{0}" did not finish.&#xA;Reinstall the full package before launching?</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Message">Server "{0}" released version {1} (currently {2}).&#xA;Update the modpack before launching?</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.Title">Union modpack update</sys:String>
+    <sys:String x:Key="Minecraft.Launch.UnionUpdate.UpdateNow">Update now</sys:String>
 
     <!-- Music -->
 
